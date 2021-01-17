@@ -1,3 +1,3 @@
-self.addEventListener('message', e => {
-    console.log(e)
+self.addEventListener('message', (e) => {
+    console.log(e);
 });

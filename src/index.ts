@@ -1,4 +1,4 @@
-console.log("hello world!");
+console.log('hello world!');
 
-const worker = new Worker('worker.ts')
-worker.postMessage({})
+const worker = new Worker('worker.ts');
+worker.postMessage({});

@@ -4,13 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint src/**/*.ts",
+    "lint-fix": "npm run lint -- --fix",
     "start": "parcel src/index.html",
-    "build-prod": "parcel build src/index.html"
+    "prebuild": "rimraf dist",
+    "build": "parcel build src/index.html",
+    "build-prod": "npm run build -- --no-source-maps"
   },
   "author": "Christian Siegel",
   "license": "MIT",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "4.13.0",
+    "@typescript-eslint/parser": "4.13.0",
+    "eslint": "7.18.0",
+    "eslint-config-prettier": "7.1.0",
+    "eslint-plugin-prettier": "3.3.1",
     "parcel-bundler": "1.12.4",
+    "prettier": "2.2.1",
+    "rimraf": "3.0.2",
     "sass": "1.32.4",
     "typescript": "4.1.3"
   }
