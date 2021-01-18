@@ -11,6 +11,36 @@
     
   </head>
   <body>
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title">
+            knitter.js
+          </h1>
+          <h2 class="subtitle">
+            Drawing with straight lines
+          </h2>
+          <div class="columns">
+            <div class="column is-one-third">
+              <div class="card">
+                <div class="card-content">
+                  <img id="input-image" class="grayscale circle" src="img.jpg"/>
+                </div>
+                <footer class="card-footer">
+                  <p class="card-footer-item">
+                    <input id="image-upload-input" type="file" accept="image/*" hidden />
+                    <button id="image-upload-button" class="button">Open Image</button>
+                  </p>
+                </footer>
+              </div>
+            </div>
+            <div class="column">
+              Auto
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     <script src="index.ts"></script>
   </body>
 </html>
