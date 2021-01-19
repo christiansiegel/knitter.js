@@ -1,10 +1,6 @@
 @charset "utf-8";
 @import "../node_modules/bulma/bulma.sass";
 
-img.grayscale {
+img.is-grayscale {
   filter: grayscale(100%);
-}
-
-img.circle {
-  border-radius: 50%;
 }
