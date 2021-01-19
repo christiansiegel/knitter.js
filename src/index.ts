@@ -3,30 +3,28 @@ console.log('hello world!');
 const worker = new Worker('worker.ts');
 worker.postMessage({});
 
-interface HTMLInputEvent extends Event {
-    target: HTMLInputElement & EventTarget;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const imageUploadButton = <HTMLButtonElement | null>document.getElementById('image-upload-button');
-    const imageUploadInput = <HTMLInputElement | null>document.getElementById('image-upload-input');
+    const imageUploadButton = document.getElementById('image-upload-button');
+    const imageUploadInput = document.getElementById('image-upload-input');
 
-    if (imageUploadButton) imageUploadButton.onclick = () => imageUploadInput?.click();
-    if (imageUploadInput) imageUploadInput.onchange = (e) => handleImageInputEvent(<HTMLInputEvent>e);
+    imageUploadButton?.addEventListener('click', () => imageUploadInput?.click());
+    imageUploadInput?.addEventListener('change', async (e) => {
+        const files = (<HTMLInputElement>e.target).files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const dataUrl = await readFileAsDataURL(file);
+            setInputImageSrc(dataUrl);
+        }
+    });
 });
 
-function handleImageInputEvent(event: HTMLInputEvent): void {
-    const files = event.target?.files;
-    if (files && files.length > 0) openImage(files[0]);
-}
-
-function openImage(file: File): void {
-    console.log(file);
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-        setInputImageSrc(<string>fileReader.result);
-    };
-    fileReader.readAsDataURL(file);
+async function readFileAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(<string>reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 function setInputImageSrc(src: string): void {

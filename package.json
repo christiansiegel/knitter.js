@@ -11,6 +11,9 @@
     "build": "parcel build src/index.html",
     "build-prod": "npm run build -- --no-source-maps"
   },
+  "browserslist": [
+    "since 2017-06"
+  ],
   "author": "Christian Siegel",
   "license": "MIT",
   "devDependencies": {
