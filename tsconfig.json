@@ -9,6 +9,11 @@
         "moduleResolution": "node",
         "target": "es6",
         "allowJs": true,
+        "lib": [
+            "es6",
+            "webworker",
+            "dom"
+        ]
     },
     "include": [
         "./src/**/*"
