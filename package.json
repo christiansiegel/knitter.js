@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "bulma": "0.9.1",
+    "comlink": "4.3.0",
     "mobx": "6.0.4"
   }
 }

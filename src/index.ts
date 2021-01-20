@@ -1,32 +1,8 @@
 import { autorun, configure, makeAutoObservable } from 'mobx';
-import { CANVAS_SIZE_INPUT, InputMessage, OutputMessage, PINS_OUTPUT, PIXEL_DATA_INPUT } from './messages';
-import { Pin } from './types';
+import { proxy, wrap } from 'comlink';
+import { Core } from './core';
 
-console.log('hello world!');
-
-class WorkerFacade {
-    constructor(private worker: Worker) {}
-
-    setCanvasSize(canvasSize: number): void {
-        this.postToWorker({ type: CANVAS_SIZE_INPUT, canvasSize: canvasSize });
-    }
-
-    setPixelData(pixelData: Uint8ClampedArray): void {
-        this.postToWorker({ type: PIXEL_DATA_INPUT, pixelData: pixelData });
-    }
-
-    subscribeToPins(callback: (pins: Pin[]) => void): void {
-        this.worker.addEventListener('message', ({ data }: { data: OutputMessage }) => {
-            data.type === PINS_OUTPUT && callback(data.pins);
-        });
-    }
-
-    private postToWorker(message: InputMessage): void {
-        this.worker.postMessage(message);
-    }
-}
-
-const worker = new WorkerFacade(new Worker('worker.ts'));
+const WorkerCore = wrap<typeof Core>(new Worker('worker.ts'));
 
 configure({
     enforceActions: 'observed',
@@ -49,7 +25,7 @@ class Store {
 
 const store = new Store();
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const imageUploadButton = document.getElementById('image-upload-button');
     const imageUploadInput = document.getElementById('image-upload-input');
 
@@ -81,16 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
         store.setInputPixels(pixels);
     });
 
+    const core = await new WorkerCore();
+    await core.registerPinCalback(proxy((pins) => console.log('received pin event', pins)));
+
     autorun(async () => {
-        store.inputPixels && worker.setPixelData(store.inputPixels);
+        store.inputPixels && (await core.setPixelData(store.inputPixels));
     });
 
     autorun(async () => {
-        store.canvasSize && worker.setCanvasSize(store.canvasSize);
-    });
-
-    worker.subscribeToPins((pins) => {
-        console.log('pins output', pins);
+        store.canvasSize && (await core.setCanvasSize(store.canvasSize));
     });
 });
 
