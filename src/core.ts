@@ -1,10 +1,18 @@
-import { action, autorun, makeObservable, observable, reaction } from 'mobx';
+import { action, autorun, makeObservable, observable } from 'mobx';
 import { Dimensions, Pin } from './types';
 
 function sleep(delayMillis: number): void {
-    var start = new Date().getTime();
+    const start = new Date().getTime();
     while (new Date().getTime() < start + delayMillis);
 }
+
+const wait = (ms: number) =>
+    new Promise<void>((resolve) =>
+        setTimeout(() => {
+            sleep(ms);
+            resolve();
+        }, ms),
+    );
 
 export class CoreParams {
     imageDimensions?: Dimensions = undefined;
@@ -42,11 +50,22 @@ export class Core {
     private pinsSubscriptions: ((pins: Pin[]) => void)[] = [];
 
     constructor() {
-        autorun(() => {
+        autorun(async () => {
             const imageDimensions = this.params.imageDimensions;
             const numberOfPins = this.params.numberOfPins;
             if (!numberOfPins || !imageDimensions) return;
             const pins = this.calcPins(imageDimensions, numberOfPins);
+            console.log('before long lasting op');
+
+            for (let i = 0; i < 100; ++i) {
+                if (this.params.numberOfPins !== numberOfPins) {
+                    console.warn('number of pins changed since i started -> abort');
+                    return;
+                }
+                await wait(10);
+            }
+
+            console.log('after long lasting op');
             this.pinsSubscriptions.forEach((handler) => handler(pins));
         });
     }
@@ -60,6 +79,7 @@ export class Core {
     }
 
     setNumberOfPins(numberOfPins: number): void {
+        console.log('[core] setNumberOfPins', numberOfPins);
         this.params.setNumberOfPins(numberOfPins);
     }
 

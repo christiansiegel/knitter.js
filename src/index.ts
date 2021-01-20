@@ -26,16 +26,17 @@ class Store {
 const store = new Store();
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const imageUploadButton = document.getElementById('image-upload-button');
-    const imageUploadInput = document.getElementById('image-upload-input');
-    const inputImage = document.getElementById('input-image');
+    const imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
+    const imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
+    const inputImage = <HTMLImageElement>document.getElementById('input-image');
     const outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
+    const testAbortButton = <HTMLButtonElement>document.getElementById('test-abort-button');
 
-    imageUploadButton?.addEventListener('click', () => imageUploadInput?.click());
-    imageUploadInput?.addEventListener('change', (e) => {
+    imageUploadButton.onclick = () => imageUploadInput.click();
+    imageUploadInput.onchange = (e) => {
         const files = (<HTMLInputElement>e.target).files;
         if (files && files.length > 0) store.setInputImgFile(files[0]);
-    });
+    };
 
     autorun(async () => {
         const file = store.inputImgFile;
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     autorun(() => {
         const dataUrl = store.inputImgDataUrl;
         if (!dataUrl) return;
-        if (inputImage) (<HTMLImageElement>inputImage).src = dataUrl;
+        inputImage.src = dataUrl;
     });
 
     autorun(async () => {
@@ -60,24 +61,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const core = await new WorkerCore();
     await core.setNumberOfPins(200);
-    await core.addPinsSubscription(proxy((pins) => {
-        const ctx = outputCanvas.getContext('2d')
-        console.log("draw pins")
-        pins.forEach(pin => {
-            ctx?.fillRect(pin.x,pin.y,1,1);
-        })
-    }));
+    await core.addPinsSubscription(
+        proxy((pins) => {
+            const ctx = outputCanvas.getContext('2d');
+            ctx?.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            console.log('draw pins');
+            pins.forEach((pin) => {
+                ctx?.fillRect(pin.x, pin.y, 1, 1);
+            });
+        }),
+    );
+
+    testAbortButton.onclick = async () => {
+        console.log('click abort');
+        await core.setNumberOfPins(100);
+    };
 
     autorun(async () => {
         store.inputPixels && (await core.setImageData(store.inputPixels));
     });
 
     autorun(async () => {
-        if(!store.canvasSize) return
-        outputCanvas.width = store.canvasSize
-        outputCanvas.height = store.canvasSize
+        if (!store.canvasSize) return;
+        outputCanvas.width = store.canvasSize;
+        outputCanvas.height = store.canvasSize;
         //outputCanvas.setsc
-        const ctx = outputCanvas.getContext('2d')
+        const ctx = outputCanvas.getContext('2d');
         ctx?.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
         await core.setImageDimensions({ width: store.canvasSize, height: store.canvasSize });
