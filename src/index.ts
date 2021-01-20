@@ -28,6 +28,8 @@ const store = new Store();
 document.addEventListener('DOMContentLoaded', async () => {
     const imageUploadButton = document.getElementById('image-upload-button');
     const imageUploadInput = document.getElementById('image-upload-input');
+    const inputImage = document.getElementById('input-image');
+    const outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
 
     imageUploadButton?.addEventListener('click', () => imageUploadInput?.click());
     imageUploadInput?.addEventListener('change', (e) => {
@@ -45,7 +47,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     autorun(() => {
         const dataUrl = store.inputImgDataUrl;
         if (!dataUrl) return;
-        const inputImage = document.getElementById('input-image');
         if (inputImage) (<HTMLImageElement>inputImage).src = dataUrl;
     });
 
@@ -58,14 +59,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const core = await new WorkerCore();
-    await core.registerPinCalback(proxy((pins) => console.log('received pin event', pins)));
+    await core.setNumberOfPins(200);
+    await core.addPinsSubscription(proxy((pins) => {
+        const ctx = outputCanvas.getContext('2d')
+        console.log("draw pins")
+        pins.forEach(pin => {
+            ctx?.fillRect(pin.x,pin.y,1,1);
+        })
+    }));
 
     autorun(async () => {
-        store.inputPixels && (await core.setPixelData(store.inputPixels));
+        store.inputPixels && (await core.setImageData(store.inputPixels));
     });
 
     autorun(async () => {
-        store.canvasSize && (await core.setCanvasSize(store.canvasSize));
+        if(!store.canvasSize) return
+        outputCanvas.width = store.canvasSize
+        outputCanvas.height = store.canvasSize
+        //outputCanvas.setsc
+        const ctx = outputCanvas.getContext('2d')
+        ctx?.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+        await core.setImageDimensions({ width: store.canvasSize, height: store.canvasSize });
     });
 });
 

@@ -4,3 +4,16 @@
 img.is-grayscale {
   filter: grayscale(100%);
 }
+
+.output-canvas-container {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+
+  canvas {
+    top: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}
