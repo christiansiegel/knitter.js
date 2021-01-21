@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
     const inputImage = <HTMLImageElement>document.getElementById('input-image');
     const outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
-    const testAbortButton = <HTMLButtonElement>document.getElementById('test-abort-button');
 
     imageUploadButton.onclick = () => imageUploadInput.click();
     imageUploadInput.onchange = (e) => {
@@ -71,11 +70,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }),
     );
-
-    testAbortButton.onclick = async () => {
-        console.log('click abort');
-        await core.setNumberOfPins(100);
-    };
 
     autorun(async () => {
         store.inputPixels && (await core.setImageData(store.inputPixels));
