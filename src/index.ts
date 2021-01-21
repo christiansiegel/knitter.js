@@ -2,6 +2,7 @@ import { autorun, configure, makeAutoObservable } from 'mobx';
 import { proxy, wrap } from 'comlink';
 import { Core } from './core';
 import { UserInterface } from './ui';
+import { Shape } from './types';
 
 const WorkerCore = wrap<typeof Core>(new Worker('worker.ts'));
 
@@ -28,9 +29,13 @@ const store = new Store();
 
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
-
+    ui.setShape('circle');
     ui.onInputImageSelected = store.setInputImgFile;
     ui.onFadeParamChange = (value: number) => console.log('fade param ', value);
+
+    ui.onShapeSelected = (shape: Shape) => {
+        ui.setShape(shape);
+    };
 
     autorun(async () => {
         const file = store.inputImgFile;

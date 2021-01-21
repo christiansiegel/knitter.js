@@ -1,4 +1,4 @@
-import { Dimensions, Pin } from './types';
+import { Dimensions, Pin, Shape } from './types';
 
 class Slider {
     onchange: ((value: number) => void) | null = null;
@@ -20,6 +20,8 @@ class Slider {
 }
 
 export class UserInterface {
+    private circleShapeButton: HTMLButtonElement;
+    private squareShapeButton: HTMLButtonElement;
     private imageUploadButton: HTMLButtonElement;
     private imageUploadInput: HTMLInputElement;
     private inputImage: HTMLImageElement;
@@ -35,12 +37,23 @@ export class UserInterface {
     onStringsParamChange: ((value: number) => void) | null = null;
     onFadeParamChange: ((value: number) => void) | null = null;
     onDistanceParamChange: ((value: number) => void) | null = null;
+    onShapeSelected: ((value: Shape) => void) | null = null;
 
     constructor() {
         this.imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
         this.imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
         this.inputImage = <HTMLImageElement>document.getElementById('input-image');
         this.outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
+
+        this.circleShapeButton = <HTMLButtonElement>document.getElementById('circle-shape-button');
+        this.circleShapeButton.onclick = () => {
+            this.onShapeSelected && this.onShapeSelected('circle');
+        };
+
+        this.squareShapeButton = <HTMLButtonElement>document.getElementById('square-shape-button');
+        this.squareShapeButton.onclick = () => {
+            this.onShapeSelected && this.onShapeSelected('square');
+        };
 
         this.pinsParamSlider = new Slider('pins-param-input', 'pins-param-output');
         this.pinsParamSlider.onchange = (value: number) => {
@@ -90,5 +103,15 @@ export class UserInterface {
         pins.forEach((pin) => {
             ctx?.fillRect(pin.x, pin.y, 1, 1);
         });
+    }
+
+    setShape(shape: Shape): void {
+        if (shape === 'circle') {
+            this.circleShapeButton.classList.add('is-info', 'is-selected');
+            this.squareShapeButton.classList.remove('is-info', 'is-selected');
+        } else {
+            this.squareShapeButton.classList.add('is-info', 'is-selected');
+            this.circleShapeButton.classList.remove('is-info', 'is-selected');
+        }
     }
 }

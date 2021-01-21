@@ -8,3 +8,5 @@ export interface Dimensions {
     width: number;
     height: number;
 }
+
+export type Shape = 'square' | 'circle';
