@@ -109,9 +109,11 @@ export class UserInterface {
         if (shape === 'circle') {
             this.circleShapeButton.classList.add('is-info', 'is-selected');
             this.squareShapeButton.classList.remove('is-info', 'is-selected');
+            this.inputImage.classList.add('is-circle');
         } else {
             this.squareShapeButton.classList.add('is-info', 'is-selected');
             this.circleShapeButton.classList.remove('is-info', 'is-selected');
+            this.inputImage.classList.remove('is-circle');
         }
     }
 }

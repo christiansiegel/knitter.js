@@ -8,6 +8,14 @@ img.is-grayscale {
   filter: grayscale(100%);
 }
 
+img.is-circle {
+  border-radius: 100%;
+}
+
+img.is-circle-animation {
+  transition: border-radius ease-in-out 0.2s;
+}
+
 .output-canvas-container {
   width: 100%;
   padding-top: 100%;
