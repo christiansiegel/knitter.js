@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
 
     ui.onInputImageSelected = store.setInputImgFile;
+    ui.onFadeParamChange = (value: number) => console.log('fade param ', value);
 
     autorun(async () => {
         const file = store.inputImgFile;

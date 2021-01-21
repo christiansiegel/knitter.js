@@ -1,18 +1,66 @@
 import { Dimensions, Pin } from './types';
 
+class Slider {
+    onchange: ((value: number) => void) | null = null;
+
+    constructor(inputId: string, spanId: string) {
+        const input = <HTMLInputElement>document.getElementById(inputId);
+        const span = <HTMLSpanElement>document.getElementById(spanId);
+
+        input.oninput = (e) => {
+            const value = (<HTMLInputElement>e.target).value;
+            span.innerHTML = value;
+        };
+
+        input.onchange = (e) => {
+            const value = (<HTMLInputElement>e.target).valueAsNumber;
+            this.onchange && this.onchange(value);
+        };
+    }
+}
+
 export class UserInterface {
     private imageUploadButton: HTMLButtonElement;
     private imageUploadInput: HTMLInputElement;
     private inputImage: HTMLImageElement;
     private outputCanvas: HTMLCanvasElement;
 
-    public onInputImageSelected: ((file: File) => void) | null = null;
+    private pinsParamSlider: Slider;
+    private stringsParamSlider: Slider;
+    private fadeParamSlider: Slider;
+    private distanceParamSlider: Slider;
+
+    onInputImageSelected: ((file: File) => void) | null = null;
+    onPinsParamChange: ((value: number) => void) | null = null;
+    onStringsParamChange: ((value: number) => void) | null = null;
+    onFadeParamChange: ((value: number) => void) | null = null;
+    onDistanceParamChange: ((value: number) => void) | null = null;
 
     constructor() {
         this.imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
         this.imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
         this.inputImage = <HTMLImageElement>document.getElementById('input-image');
         this.outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
+
+        this.pinsParamSlider = new Slider('pins-param-input', 'pins-param-output');
+        this.pinsParamSlider.onchange = (value: number) => {
+            this.onPinsParamChange && this.onPinsParamChange(value);
+        };
+
+        this.stringsParamSlider = new Slider('strings-param-input', 'strings-param-output');
+        this.stringsParamSlider.onchange = (value: number) => {
+            this.onStringsParamChange && this.onStringsParamChange(value);
+        };
+
+        this.fadeParamSlider = new Slider('fade-param-input', 'fade-param-output');
+        this.fadeParamSlider.onchange = (value: number) => {
+            this.onFadeParamChange && this.onFadeParamChange(value);
+        };
+
+        this.distanceParamSlider = new Slider('distance-param-input', 'distance-param-output');
+        this.distanceParamSlider.onchange = (value: number) => {
+            this.onDistanceParamChange && this.onDistanceParamChange(value);
+        };
 
         this.imageUploadButton.onclick = () => this.imageUploadInput.click();
 
