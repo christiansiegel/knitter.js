@@ -1,6 +1,7 @@
 import { autorun, configure, makeAutoObservable } from 'mobx';
 import { proxy, wrap } from 'comlink';
 import { Core } from './core';
+import { UserInterface } from './ui';
 
 const WorkerCore = wrap<typeof Core>(new Worker('worker.ts'));
 
@@ -26,16 +27,9 @@ class Store {
 const store = new Store();
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
-    const imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
-    const inputImage = <HTMLImageElement>document.getElementById('input-image');
-    const outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
+    const ui = new UserInterface();
 
-    imageUploadButton.onclick = () => imageUploadInput.click();
-    imageUploadInput.onchange = (e) => {
-        const files = (<HTMLInputElement>e.target).files;
-        if (files && files.length > 0) store.setInputImgFile(files[0]);
-    };
+    ui.onInputImageSelected = store.setInputImgFile;
 
     autorun(async () => {
         const file = store.inputImgFile;
@@ -46,8 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     autorun(() => {
         const dataUrl = store.inputImgDataUrl;
-        if (!dataUrl) return;
-        inputImage.src = dataUrl;
+        dataUrl && ui.setInputImageSrc(dataUrl);
     });
 
     autorun(async () => {
@@ -60,16 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const core = await new WorkerCore();
     await core.setNumberOfPins(200);
-    await core.addPinsSubscription(
-        proxy((pins) => {
-            const ctx = outputCanvas.getContext('2d');
-            ctx?.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-            console.log('draw pins');
-            pins.forEach((pin) => {
-                ctx?.fillRect(pin.x, pin.y, 1, 1);
-            });
-        }),
-    );
+    await core.addPinsSubscription(proxy((pins) => ui.setPins(pins)));
 
     autorun(async () => {
         store.inputPixels && (await core.setImageData(store.inputPixels));
@@ -77,13 +61,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     autorun(async () => {
         if (!store.canvasSize) return;
-        outputCanvas.width = store.canvasSize;
-        outputCanvas.height = store.canvasSize;
-        //outputCanvas.setsc
-        const ctx = outputCanvas.getContext('2d');
-        ctx?.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
-        await core.setImageDimensions({ width: store.canvasSize, height: store.canvasSize });
+        const dimensions = { width: store.canvasSize, height: store.canvasSize };
+        ui.initCanvas(dimensions); // maybe infer that later from pins?
+        await core.setImageDimensions(dimensions);
     });
 });
 
