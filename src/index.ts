@@ -1,8 +1,13 @@
-import { autorun, configure, makeAutoObservable } from 'mobx';
+import { action, autorun, configure, makeObservable, observable } from 'mobx';
 import { proxy, wrap } from 'comlink';
 import { Core } from './core';
 import { UserInterface } from './ui';
 import { Shape } from './types';
+
+function getItemOrDefaultFromLocalStorage(key: string, defaultValue: string) {
+    const value = localStorage.getItem(key);
+    return value === null ? defaultValue : value;
+}
 
 const WorkerCore = wrap<typeof Core>(new Worker('worker.ts'));
 
@@ -11,19 +16,38 @@ configure({
 });
 
 class Store {
-    inputImgDataUrl?: string = undefined;
-    canvasSize = 700;
-    inputPixels?: Uint8ClampedArray = undefined;
+    inputImgDataUrl: string | null;
+    canvasSize: number;
 
-    constructor() {
-        makeAutoObservable(this);
+    constructor(initial: { canvasSize: number; inputImgDataUrl: string | null }) {
+        this.inputImgDataUrl = initial.inputImgDataUrl;
+        this.canvasSize = initial.canvasSize;
+
+        makeObservable(this, {
+            inputImgDataUrl: observable,
+            canvasSize: observable,
+            setInputImgDataUrl: action,
+        });
     }
 
     setInputImgDataUrl = (dataUrl: string) => (this.inputImgDataUrl = dataUrl);
-    setInputPixels = (pixels: Uint8ClampedArray) => (this.inputPixels = pixels);
 }
 
-const store = new Store();
+//localStorage.clear()
+
+const store = new Store({
+    canvasSize: parseInt(getItemOrDefaultFromLocalStorage('canvasSize', '700')),
+    inputImgDataUrl: localStorage.getItem('inputImgDataUrl'),
+});
+
+autorun(() => {
+    localStorage.setItem('canvasSize', store.canvasSize.toString());
+    if (store.inputImgDataUrl === null) {
+        localStorage.removeItem('inputImgDataUrl');
+    } else {
+        localStorage.setItem('inputImgDataUrl', store.inputImgDataUrl);
+    }
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
@@ -40,21 +64,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         dataUrl && ui.setInputImageSrc(dataUrl);
     });
 
+    const core = await new WorkerCore();
+
     autorun(async () => {
         const dataUrl = store.inputImgDataUrl;
         const size = store.canvasSize;
         if (!dataUrl) return;
         const pixels = await convertImageDataUrlToGrayPixels(dataUrl, size, size);
-        store.setInputPixels(pixels);
+        await core.setImageData(pixels);
     });
 
-    const core = await new WorkerCore();
     await core.setNumberOfPins(200);
     await core.addPinsSubscription(proxy((pins) => ui.setPins(pins)));
-
-    autorun(async () => {
-        store.inputPixels && (await core.setImageData(store.inputPixels));
-    });
 
     autorun(async () => {
         if (!store.canvasSize) return;
