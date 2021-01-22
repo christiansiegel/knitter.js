@@ -39,7 +39,7 @@ export class UserInterface {
     private fadeParamSlider: Slider;
     private distanceParamSlider: Slider;
 
-    onInputImageSelected: ((file: File) => void) | null = null;
+    onInputImageSelected: ((dataUrl: string) => void) | null = null;
     onPinsParamChange: ((value: number) => void) | null = null;
     onStringsParamChange: ((value: number) => void) | null = null;
     onFadeParamChange: ((value: number) => void) | null = null;
@@ -84,10 +84,11 @@ export class UserInterface {
 
         this.imageUploadButton.onclick = () => this.imageUploadInput.click();
 
-        this.imageUploadInput.onchange = (e) => {
+        this.imageUploadInput.onchange = async (e) => {
             const files = (<HTMLInputElement>e.target).files;
             if (files && files.length > 0) {
-                this.onInputImageSelected && this.onInputImageSelected(files[0]);
+                const dataUrl = await readFileAsDataURL(files[0]);
+                this.onInputImageSelected && this.onInputImageSelected(dataUrl);
             }
         };
     }
@@ -119,4 +120,13 @@ export class UserInterface {
             this.distanceParamSlider.hide();
         }
     }
+}
+
+async function readFileAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(<string>reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }

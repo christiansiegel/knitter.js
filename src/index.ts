@@ -12,7 +12,6 @@ configure({
 
 class Store {
     inputImgDataUrl?: string = undefined;
-    inputImgFile?: File = undefined;
     canvasSize = 700;
     inputPixels?: Uint8ClampedArray = undefined;
 
@@ -21,7 +20,6 @@ class Store {
     }
 
     setInputImgDataUrl = (dataUrl: string) => (this.inputImgDataUrl = dataUrl);
-    setInputImgFile = (file: File) => (this.inputImgFile = file);
     setInputPixels = (pixels: Uint8ClampedArray) => (this.inputPixels = pixels);
 }
 
@@ -30,19 +28,12 @@ const store = new Store();
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
     ui.setShape('circle');
-    ui.onInputImageSelected = store.setInputImgFile;
+    ui.onInputImageSelected = store.setInputImgDataUrl;
     ui.onFadeParamChange = (value: number) => console.log('fade param ', value);
 
     ui.onShapeSelected = (shape: Shape) => {
         ui.setShape(shape);
     };
-
-    autorun(async () => {
-        const file = store.inputImgFile;
-        if (!file) return;
-        const dataUrl = await readFileAsDataURL(file);
-        store.setInputImgDataUrl(dataUrl);
-    });
 
     autorun(() => {
         const dataUrl = store.inputImgDataUrl;
@@ -97,15 +88,6 @@ function convertRgbaToGrayArray(rgbaData: Uint8ClampedArray): Uint8ClampedArray 
 
 function convertRgbToGrayValue(red: number, green: number, blue: number): number {
     return Math.round(red * 0.2126 + green * 0.7152 + blue * 0.0722);
-}
-
-async function readFileAsDataURL(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(<string>reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
 }
 
 async function createImageFromDataUrl(url: string): Promise<HTMLImageElement> {
