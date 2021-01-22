@@ -1,15 +1,18 @@
 import { Dimensions, Pin, Shape } from './types';
 
 class Slider {
+    private root: HTMLDivElement;
+
     onchange: ((value: number) => void) | null = null;
 
-    constructor(inputId: string, spanId: string) {
-        const input = <HTMLInputElement>document.getElementById(inputId);
-        const span = <HTMLSpanElement>document.getElementById(spanId);
+    constructor(id: string) {
+        this.root = <HTMLDivElement>document.getElementById(id);
+        const input = this.root.getElementsByTagName('input')[0];
+        const output = this.root.getElementsByTagName('output')[0];
 
         input.oninput = (e) => {
             const value = (<HTMLInputElement>e.target).value;
-            span.innerHTML = value;
+            output.innerHTML = value;
         };
 
         input.onchange = (e) => {
@@ -17,6 +20,10 @@ class Slider {
             this.onchange && this.onchange(value);
         };
     }
+
+    hide = () => (this.root.style.display = 'none');
+
+    show = () => (this.root.style.display = 'block');
 }
 
 export class UserInterface {
@@ -55,22 +62,22 @@ export class UserInterface {
             this.onShapeSelected && this.onShapeSelected('square');
         };
 
-        this.pinsParamSlider = new Slider('pins-param-input', 'pins-param-output');
+        this.pinsParamSlider = new Slider('pins-param-slider');
         this.pinsParamSlider.onchange = (value: number) => {
             this.onPinsParamChange && this.onPinsParamChange(value);
         };
 
-        this.stringsParamSlider = new Slider('strings-param-input', 'strings-param-output');
+        this.stringsParamSlider = new Slider('strings-param-slider');
         this.stringsParamSlider.onchange = (value: number) => {
             this.onStringsParamChange && this.onStringsParamChange(value);
         };
 
-        this.fadeParamSlider = new Slider('fade-param-input', 'fade-param-output');
+        this.fadeParamSlider = new Slider('fade-param-slider');
         this.fadeParamSlider.onchange = (value: number) => {
             this.onFadeParamChange && this.onFadeParamChange(value);
         };
 
-        this.distanceParamSlider = new Slider('distance-param-input', 'distance-param-output');
+        this.distanceParamSlider = new Slider('distance-param-slider');
         this.distanceParamSlider.onchange = (value: number) => {
             this.onDistanceParamChange && this.onDistanceParamChange(value);
         };
@@ -110,10 +117,12 @@ export class UserInterface {
             this.circleShapeButton.classList.add('is-info', 'is-selected');
             this.squareShapeButton.classList.remove('is-info', 'is-selected');
             this.inputImage.classList.add('is-circle');
+            this.distanceParamSlider.show();
         } else {
             this.squareShapeButton.classList.add('is-info', 'is-selected');
             this.circleShapeButton.classList.remove('is-info', 'is-selected');
             this.inputImage.classList.remove('is-circle');
+            this.distanceParamSlider.hide();
         }
     }
 }
