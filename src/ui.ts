@@ -1,4 +1,4 @@
-import { Dimensions, Pin, Shape } from './types';
+import { Pin, Shape } from './types';
 
 class Slider {
     private root: HTMLDivElement;
@@ -96,19 +96,13 @@ export class UserInterface {
         this.inputImage.src = src;
     }
 
-    initCanvas(dimensions: Dimensions): void {
-        this.outputCanvas.width = dimensions.width;
-        this.outputCanvas.height = dimensions.height;
-        //outputCanvas.setsc
-        const ctx = this.outputCanvas.getContext('2d');
-        ctx?.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
-    }
-
     setPins(pins: Pin[]): void {
-        const ctx = this.outputCanvas.getContext('2d');
-        ctx?.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
+        const ctx = <CanvasRenderingContext2D>this.outputCanvas.getContext('2d');
+        this.outputCanvas.width = Math.max(...pins.map((pin) => pin.x)) + 1; // +1 for pins
+        this.outputCanvas.height = Math.max(...pins.map((pin) => pin.y)) + 1; // +1 for pins
+        ctx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
         pins.forEach((pin) => {
-            ctx?.fillRect(pin.x, pin.y, 1, 1);
+            ctx.fillRect(pin.x, pin.y, 1, 1);
         });
     }
 

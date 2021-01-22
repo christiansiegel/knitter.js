@@ -67,9 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     autorun(async () => {
         if (!store.canvasSize) return;
-        const dimensions = { width: store.canvasSize, height: store.canvasSize };
-        ui.initCanvas(dimensions); // maybe infer that later from pins?
-        await core.setImageDimensions(dimensions);
+        await core.setImageDimensions({ width: store.canvasSize, height: store.canvasSize });
     });
 });
 
