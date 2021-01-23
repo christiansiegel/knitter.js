@@ -2,24 +2,31 @@ import { Pin, Shape } from './types';
 
 class Slider {
     private root: HTMLDivElement;
+    private input: HTMLInputElement;
+    private output: HTMLOutputElement;
 
     onchange: ((value: number) => void) | null = null;
 
     constructor(id: string) {
         this.root = <HTMLDivElement>document.getElementById(id);
-        const input = this.root.getElementsByTagName('input')[0];
-        const output = this.root.getElementsByTagName('output')[0];
+        this.input = this.root.getElementsByTagName('input')[0];
+        this.output = this.root.getElementsByTagName('output')[0];
 
-        input.oninput = (e) => {
+        this.input.oninput = (e) => {
             const value = (<HTMLInputElement>e.target).value;
-            output.innerHTML = value;
+            this.output.innerHTML = value;
         };
 
-        input.onchange = (e) => {
+        this.input.onchange = (e) => {
             const value = (<HTMLInputElement>e.target).valueAsNumber;
             this.onchange && this.onchange(value);
         };
     }
+
+    setValue = (value: number) => {
+        this.input.valueAsNumber = value;
+        this.output.innerHTML = value.toString();
+    };
 
     hide = () => (this.root.style.display = 'none');
 
@@ -95,6 +102,18 @@ export class UserInterface {
 
     setInputImageSrc(src: string): void {
         this.inputImage.src = src;
+    }
+
+    setNumberOfPins(numberOfPins: number): void {
+        this.pinsParamSlider.setValue(numberOfPins);
+    }
+
+    setFadeRate(fadeRate: number): void {
+        this.fadeParamSlider.setValue(fadeRate);
+    }
+
+    setMinimalDistance(minimalDistance: number): void {
+        this.distanceParamSlider.setValue(minimalDistance);
     }
 
     setPins(pins: Pin[]): void {
