@@ -1,93 +1,58 @@
-import { action, autorun, makeObservable, observable } from 'mobx';
-import { Dimensions, Pin } from './types';
+import { Dimensions, Pin, Shape } from './types';
 
-function sleep(delayMillis: number): void {
-    const start = new Date().getTime();
-    while (new Date().getTime() < start + delayMillis);
+interface PatternParams {
+    pins: Pin[];
+    pixels: Uint8ClampedArray;
+    fadeRate: number;
+    minimalDistance: number;
 }
 
-const wait = (ms: number) =>
-    new Promise<void>((resolve) =>
-        setTimeout(() => {
-            sleep(ms);
-            resolve();
-        }, ms),
-    );
+class PatternCalculation {
+    static nextId = 0;
 
-export class CoreParams {
-    imageDimensions?: Dimensions = undefined;
-    imageData?: Uint8ClampedArray = undefined;
-    numberOfPins?: number = undefined;
+    private _id: number;
 
-    constructor() {
-        makeObservable(this, {
-            imageDimensions: observable,
-            imageData: observable,
-            numberOfPins: observable,
-
-            setImageDimensions: action,
-            setImageData: action,
-            setNumberOfPins: action,
-        });
+    constructor(private params: PatternParams) {
+        this._id = ++PatternCalculation.nextId;
     }
 
-    setImageDimensions(imageDimensions: Dimensions): void {
-        this.imageDimensions = imageDimensions;
+    get id(): number {
+        return this._id;
     }
+}
 
-    setImageData(imageData: Uint8ClampedArray): void {
-        this.imageData = imageData;
-    }
-
-    setNumberOfPins(numberOfPins: number): void {
-        this.numberOfPins = numberOfPins;
+class PatternCalculationExpired extends Error {
+    constructor(calculationId: number) {
+        super(`Pattern calculation #${calculationId} expired!`);
     }
 }
 
 export class Core {
-    private params: CoreParams = new CoreParams();
+    private patternCalculation?: PatternCalculation;
 
-    private pinsSubscriptions: ((pins: Pin[]) => void)[] = [];
-
-    constructor() {
-        autorun(async () => {
-            const imageDimensions = this.params.imageDimensions;
-            const numberOfPins = this.params.numberOfPins;
-            if (!numberOfPins || !imageDimensions) return;
-            const pins = this.calcPins(imageDimensions, numberOfPins);
-            console.log('before long lasting op');
-
-            for (let i = 0; i < 100; ++i) {
-                if (this.params.numberOfPins !== numberOfPins) {
-                    console.warn('number of pins changed since i started -> abort');
-                    return;
-                }
-                await wait(10);
-            }
-
-            console.log('after long lasting op');
-            this.pinsSubscriptions.forEach((handler) => handler(pins));
-        });
+    calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
+        if (shape === 'circle') {
+            return this.calcCirclePins(numberOfPins, dimensions);
+        } else {
+            return this.calcSquarePins(numberOfPins, dimensions);
+        }
     }
 
-    setImageDimensions(imageDimensions: Dimensions): void {
-        this.params.setImageDimensions(imageDimensions);
+    initPatternCalculation(params: PatternParams): number {
+        this.patternCalculation = new PatternCalculation(params);
+        console.log('[core] new calculation', this.patternCalculation);
+        return this.patternCalculation.id;
     }
 
-    setImageData(imageData: Uint8ClampedArray): void {
-        this.params.setImageData(imageData);
+    async calcPattern(calculationId: number, limit: number): Promise<number[]> {
+        if (this.patternCalculation?.id !== calculationId) {
+            throw new PatternCalculationExpired(calculationId);
+        }
+        blockingSleep(100); // calculation will go here
+        return [];
     }
 
-    setNumberOfPins(numberOfPins: number): void {
-        console.log('[core] setNumberOfPins', numberOfPins);
-        this.params.setNumberOfPins(numberOfPins);
-    }
-
-    addPinsSubscription(handler: (pins: Pin[]) => void): void {
-        this.pinsSubscriptions.push(handler);
-    }
-
-    private calcPins(dimensions: Dimensions, numberOfPins: number): Pin[] {
+    private calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
         const diameter = Math.min(dimensions.width, dimensions.height);
         const xOffset = Math.min(0, diameter - dimensions.width) / 2;
         const yOffset = Math.min(0, diameter - dimensions.height) / 2;
@@ -103,4 +68,20 @@ export class Core {
         }
         return pins;
     }
+
+    private calcSquarePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
+        // TODO
+        return [
+            {
+                id: 1,
+                x: dimensions.width,
+                y: dimensions.height,
+            },
+        ];
+    }
+}
+
+function blockingSleep(ms: number): void {
+    const start = new Date().getTime();
+    while (new Date().getTime() < start + ms);
 }

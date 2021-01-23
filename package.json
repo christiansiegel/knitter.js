@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint 'src/**/*.ts'",
     "lint-fix": "npm run lint -- --fix",
     "start": "parcel src/index.html",
     "prebuild": "rimraf dist",

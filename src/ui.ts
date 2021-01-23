@@ -66,7 +66,7 @@ export class UserInterface {
 
         this.squareShapeButton = <HTMLButtonElement>document.getElementById('square-shape-button');
         this.squareShapeButton.onclick = () => {
-            this.inputImage.classList.add('is-circle-animation')
+            this.inputImage.classList.add('is-circle-animation');
             this.onShapeSelected && this.onShapeSelected('square');
         };
 

@@ -3,7 +3,7 @@ import { wrap } from 'comlink';
 import { Core } from './core';
 import { UserInterface } from './ui';
 import { convertImageDataUrlToGrayPixels } from './util/image-converter';
-import { STATE } from './state'
+import { STATE } from './state';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
@@ -21,11 +21,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     autorun(() => ui.setMinimalDistance(STATE.minimalDistance));
 
     const core = await new (wrap<typeof Core>(new Worker('worker.ts')))();
-    
-    autorun(async () => await core.setImageDimensions({ ...STATE.dimensions }));
-    autorun(async () => await core.setNumberOfPins(STATE.numberOfPins));
+
     autorun(async () => {
-        STATE.imageDataUrl &&
-            core.setImageData(await convertImageDataUrlToGrayPixels(STATE.imageDataUrl, STATE.dimensions));
+        const pins = await core.calcPins(STATE.numberOfPins, { ...STATE.dimensions }, STATE.shape);
+        STATE.setPins(pins);
+    });
+
+    autorun(async () => {
+        if (!STATE.imageDataUrl) return;
+        const pixels = await convertImageDataUrlToGrayPixels(STATE.imageDataUrl, STATE.dimensions);
+        STATE.setPixels(pixels);
+    });
+
+    autorun(async () => {
+        if (!STATE.pins) return;
+        ui.setPins(STATE.pins);
+
+        if (!STATE.pixels) return;
+        const calculationId = await core.initPatternCalculation({
+            pins: STATE.pins,
+            pixels: STATE.pixels,
+            fadeRate: STATE.fadeRate,
+            minimalDistance: STATE.minimalDistance,
+        });
+        while (true) {
+            let pattern: number[];
+            try {
+                pattern = await core.calcPattern(calculationId, 10);
+            } catch (e) {
+                return;
+            }
+            console.log('new pattern bits for calc id', calculationId);
+            // TODO: abort criteria: enough strings calculated
+        }
     });
 });

@@ -1,8 +1,8 @@
-import { autorun, configure, makeAutoObservable } from 'mobx';
-import { Dimensions, Shape } from './types';
+import { autorun, configure, makeAutoObservable, observable } from 'mobx';
+import { Dimensions, Pin, Shape } from './types';
 import { LocalStorage } from './util/local-storage';
 
-interface State {
+interface Parameters {
     imageDataUrl?: string;
     dimensions: Dimensions;
     shape: Shape;
@@ -11,7 +11,12 @@ interface State {
     minimalDistance: number;
 }
 
-const init: State = {
+interface State extends Parameters {
+    pins?: Pin[];
+    pixels?: Uint8ClampedArray;
+}
+
+const init: Parameters = {
     dimensions: { width: 700, height: 700 },
     shape: 'circle',
     numberOfPins: 200,
@@ -20,7 +25,7 @@ const init: State = {
 };
 
 configure({
-    enforceActions: 'observed'
+    enforceActions: 'observed',
 });
 class OvervableState implements State {
     imageDataUrl?: string;
@@ -29,15 +34,20 @@ class OvervableState implements State {
     numberOfPins: number;
     fadeRate: number;
     minimalDistance: number;
+    pins?: Pin[] = undefined;
+    pixels?: Uint8ClampedArray = undefined;
 
-    constructor(init: State) {
+    constructor(init: Parameters) {
         this.imageDataUrl = init.imageDataUrl;
         this.shape = init.shape;
         this.dimensions = init.dimensions;
         this.numberOfPins = init.numberOfPins;
         this.fadeRate = init.fadeRate;
         this.minimalDistance = init.minimalDistance;
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            pins: observable.ref,
+            pixels: observable.ref,
+        });
     }
 
     setImageDataUrl = (imageDataUrl: string) => (this.imageDataUrl = imageDataUrl);
@@ -46,6 +56,8 @@ class OvervableState implements State {
     setNumberOfPins = (numberOfPins: number) => (this.numberOfPins = numberOfPins);
     setFadeRate = (fadeRate: number) => (this.fadeRate = fadeRate);
     setMinimalDistance = (minimalDistance: number) => (this.minimalDistance = minimalDistance);
+    setPins = (pins: Pin[]) => (this.pins = pins);
+    setPixels = (pixels: Uint8ClampedArray) => (this.pixels = pixels);
 }
 
 export const STATE = new OvervableState({
