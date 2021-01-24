@@ -1,7 +1,10 @@
-export interface Pin {
-    id: number;
+export interface Point {
     x: number;
     y: number;
+}
+
+export interface Pin extends Point {
+    id: number;
 }
 
 export interface Dimensions {

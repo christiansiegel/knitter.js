@@ -1,4 +1,4 @@
-import { Dimensions, Pin, Shape } from './types';
+import { Dimensions, Pin, Point, Shape } from './types';
 
 interface PatternParams {
     pins: Pin[];
@@ -14,6 +14,7 @@ class PatternCalculation {
     private _id: number;
 
     currPinId = -1;
+    usedCombos: { [key: string]: boolean } = {};
 
     constructor(private _params: PatternParams) {
         this._id = ++nextId;
@@ -63,6 +64,7 @@ export class Core {
 
     initPatternCalculation(params: PatternParams): number {
         //this.patternCalculation?.linesIndices?.clear();
+        cache = {};
         this.patternCalculation = new PatternCalculation(params);
         console.log('[core] new calculation', this.patternCalculation);
         return this.patternCalculation.id;
@@ -88,28 +90,32 @@ export class Core {
                 continue;
             }
             const currPin = pins[currPinId];
-            let possibleNextPinIds = this.patternCalculation.pins.map((pin) => pin.id);
 
             const numberOfPins = this.patternCalculation.pins.length;
-            const dimensions = this.patternCalculation.dimensions;
+            const width = this.patternCalculation.dimensions.width;
             const minimalDistance = this.patternCalculation.minimalDistance;
-            possibleNextPinIds = possibleNextPinIds.filter(
-                (nextPinId) => circularArrayIndexDistance(currPinId, nextPinId, numberOfPins) >= minimalDistance,
-            );
+            const usedCombos = this.patternCalculation.usedCombos;
+            const possibleNextPins = pins
+                .filter((nextPin) => !(pointCombination(currPin, nextPin) in usedCombos))
+                .filter(
+                    (nextPin) => circularArrayIndexDistance(currPinId, nextPin.id, numberOfPins) >= minimalDistance,
+                );
+
+            // todo: square pattern distances
 
             const pixels = this.patternCalculation.pixels;
 
-            const possibleNextLinesScores = possibleNextPinIds.map((nextPinId) =>
-                calcLineScore(pixels, currPin, pins[nextPinId], dimensions),
+            const possibleNextLinesScores = possibleNextPins.map((nextPin) =>
+                calcLineScore(pixels, width, currPin, nextPin),
             );
 
-            const idxMax = indexOfMax(possibleNextLinesScores);
-            const nextPinId = possibleNextPinIds[idxMax];
+            const nextPin = possibleNextPins[indexOfMax(possibleNextLinesScores)];
 
-            reduceLine(pixels, currPin, pins[nextPinId], dimensions, this.patternCalculation.fadeRate);
+            reduceLine(pixels, width, currPin, nextPin, this.patternCalculation.fadeRate);
 
-            this.patternCalculation.currPinId = nextPinId;
-            result.push(nextPinId);
+            this.patternCalculation.usedCombos[pointCombination(currPin, nextPin)] = true;
+            this.patternCalculation.currPinId = nextPin.id;
+            result.push(nextPin.id);
         }
 
         return result;
@@ -131,14 +137,14 @@ function indexOfMax(arr: number[]) {
     return maxIndex;
 }
 
-function calcLineScore(pixels: Uint8ClampedArray, a: Pin, b: Pin, dimensions: Dimensions) {
-    const indices = getLineIndices(a, b, dimensions);
+function calcLineScore(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin) {
+    const indices = getLineIndices(a, b, width);
     return 0xff - indices.reduce((sum, idx) => sum + pixels[idx], 0) / indices.length;
 }
 
-function reduceLine(pixels: Uint8ClampedArray, a: Pin, b: Pin, dimensions: Dimensions, fadeRate: number) {
+function reduceLine(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin, fadeRate: number) {
     const fade = Math.round((0xff * fadeRate) / 100);
-    const indices = getLineIndices(a, b, dimensions);
+    const indices = getLineIndices(a, b, width);
     indices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + fade)));
 }
 
@@ -147,21 +153,35 @@ function circularArrayIndexDistance(idx1: number, idx2: number, length: number):
     return Math.min(length - dist, dist);
 }
 
-function toLineKey(pin1Id: number, pin2Id: number) {
-    return Math.min(pin1Id, pin2Id) + ':' + Math.max(pin1Id, pin2Id);
+let cache: { [key: string]: number[] } = {};
+
+function comparePoints(a: Point, b: Point): number {
+    if (a.x < b.x) return -1;
+    if (a.x > b.x) return +1;
+    if (a.y < b.y) return -1;
+    if (a.y > b.y) return +1;
+    return 0;
 }
 
-function getLineIndices(a: Pin, b: Pin, dimensions: Dimensions): number[] {
-    const dx = Math.abs(b.x - a.x);
-    const dy = -Math.abs(b.y - a.y);
-    const sx = a.x < b.x ? 1 : -1;
-    const sy = a.y < b.y ? 1 : -1;
+function pointCombination(a: Point, b: Point): string {
+    [a, b] = comparePoints(a, b) > 0 ? [a, b] : [b, a];
+    return JSON.stringify({ ax: a.x, ay: a.y, bx: b.x, by: b.y });
+}
+
+function getLineIndices(a: Point, b: Point, width: number): number[] {
+    const key = pointCombination(a, b) + width;
+    const cached = cache[key];
+    if (cached) return cached;
+    const dx = Math.abs(b.x - a.x),
+        dy = -Math.abs(b.y - a.y),
+        sx = a.x < b.x ? 1 : -1,
+        sy = a.y < b.y ? 1 : -1,
+        indices = [],
+        curr = { ...a };
     let e = dx + dy,
         e2;
-    const curr = { ...a };
-    const indices = [];
     while (true) {
-        indices.push(curr.y * dimensions.width + curr.x);
+        indices.push(curr.y * width + curr.x);
         if (curr.x == b.x && curr.y == b.y) break;
         e2 = 2 * e;
         if (e2 > dy) {
@@ -173,6 +193,7 @@ function getLineIndices(a: Pin, b: Pin, dimensions: Dimensions): number[] {
             curr.y += sy;
         }
     }
+    cache[key] = indices;
     return indices;
 }
 
