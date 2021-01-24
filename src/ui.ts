@@ -119,11 +119,17 @@ export class UserInterface {
 
     setPins(pins: Pin[]): void {
         const ctx = <CanvasRenderingContext2D>this.outputCanvas.getContext('2d');
-        this.outputCanvas.width = Math.max(...pins.map((pin) => pin.x)) + 1; // +1 for pins
-        this.outputCanvas.height = Math.max(...pins.map((pin) => pin.y)) + 1; // +1 for pins
+        const xCoordinates = [...pins.map((pin) => pin.x)];
+        const yCoordinates = [...pins.map((pin) => pin.y)];
+        const xMin = Math.min(...xCoordinates);
+        const xMax = Math.max(...xCoordinates);
+        const yMin = Math.min(...yCoordinates);
+        const yMax = Math.max(...yCoordinates);
+        this.outputCanvas.width = xMax - xMin + 1; // +1 for pins
+        this.outputCanvas.height = yMax - yMin + 1; // +1 for pins
         ctx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
         pins.forEach((pin) => {
-            ctx.fillRect(pin.x, pin.y, 1, 1);
+            ctx.fillRect(pin.x - xMin, pin.y - yMin, 1, 1);
         });
     }
 
