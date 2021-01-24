@@ -13,8 +13,7 @@ let nextId = 0;
 class PatternCalculation {
     private _id: number;
 
-    linesIndices?: Map<string, number[]>;
-    pattern: number[] = [];
+    currPinId = -1;
 
     constructor(private _params: PatternParams) {
         this._id = ++nextId;
@@ -63,7 +62,7 @@ export class Core {
     }
 
     initPatternCalculation(params: PatternParams): number {
-        this.patternCalculation?.linesIndices?.clear();
+        //this.patternCalculation?.linesIndices?.clear();
         this.patternCalculation = new PatternCalculation(params);
         console.log('[core] new calculation', this.patternCalculation);
         return this.patternCalculation.id;
@@ -76,49 +75,40 @@ export class Core {
         if (this.patternCalculation.id !== calculationId) {
             throw new PatternCalculationExpired(calculationId);
         }
-        if (!this.patternCalculation.linesIndices) {
-            console.time('lines');
-            this.patternCalculation.linesIndices = getLinesIndices(
-                this.patternCalculation.pins,
-                this.patternCalculation.dimensions,
-            );
-            console.timeEnd('lines');
-        }
 
         const result: number[] = [];
 
-        if (this.patternCalculation.pattern.length === 0) {
-            this.patternCalculation.pattern.push(0);
-            result.push(0);
-            limit--;
-        }
+        const pins = this.patternCalculation.pins;
 
         for (let i = 0; i < limit; ++i) {
-            const currPinId = this.patternCalculation.pattern[this.patternCalculation.pattern.length - 1];
+            const currPinId = this.patternCalculation.currPinId;
+            if (currPinId < 0) {
+                this.patternCalculation.currPinId = 0;
+                result.push(0);
+                continue;
+            }
+            const currPin = pins[currPinId];
             let possibleNextPinIds = this.patternCalculation.pins.map((pin) => pin.id);
 
             const numberOfPins = this.patternCalculation.pins.length;
+            const dimensions = this.patternCalculation.dimensions;
             const minimalDistance = this.patternCalculation.minimalDistance;
             possibleNextPinIds = possibleNextPinIds.filter(
                 (nextPinId) => circularArrayIndexDistance(currPinId, nextPinId, numberOfPins) >= minimalDistance,
             );
 
-            const lines = this.patternCalculation.linesIndices;
-            const possibleNextLines = possibleNextPinIds
-                .map((nextPinId) => toLineKey(currPinId, nextPinId))
-                .map((lineKey) => lines.get(lineKey) || []);
-
             const pixels = this.patternCalculation.pixels;
-            const possibleNextLinesScores = possibleNextLines.map((line) => calcLineScore(pixels, line));
+
+            const possibleNextLinesScores = possibleNextPinIds.map((nextPinId) =>
+                calcLineScore(pixels, currPin, pins[nextPinId], dimensions),
+            );
 
             const idxMax = indexOfMax(possibleNextLinesScores);
-            const nextLine = possibleNextLines[idxMax];
             const nextPinId = possibleNextPinIds[idxMax];
 
-            reduceLine(pixels, nextLine, this.patternCalculation.fadeRate);
+            reduceLine(pixels, currPin, pins[nextPinId], dimensions, this.patternCalculation.fadeRate);
 
-            this.patternCalculation.linesIndices.delete(toLineKey(currPinId, nextPinId));
-            this.patternCalculation.pattern.push(nextPinId);
+            this.patternCalculation.currPinId = nextPinId;
             result.push(nextPinId);
         }
 
@@ -141,31 +131,20 @@ function indexOfMax(arr: number[]) {
     return maxIndex;
 }
 
-function calcLineScore(pixels: Uint8ClampedArray, pixelIndices: number[]) {
-    if (pixelIndices.length === 0) return 0;
-    return 0xff - pixelIndices.reduce((sum, idx) => sum + pixels[idx], 0) / pixelIndices.length;
+function calcLineScore(pixels: Uint8ClampedArray, a: Pin, b: Pin, dimensions: Dimensions) {
+    const indices = getLineIndices(a, b, dimensions);
+    return 0xff - indices.reduce((sum, idx) => sum + pixels[idx], 0) / indices.length;
 }
 
-function reduceLine(pixels: Uint8ClampedArray, pixelIndices: number[], fadeRate: number) {
+function reduceLine(pixels: Uint8ClampedArray, a: Pin, b: Pin, dimensions: Dimensions, fadeRate: number) {
     const fade = Math.round((0xff * fadeRate) / 100);
-    pixelIndices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + fade)));
+    const indices = getLineIndices(a, b, dimensions);
+    indices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + fade)));
 }
 
 function circularArrayIndexDistance(idx1: number, idx2: number, length: number): number {
     const dist = Math.abs(idx1 - idx2);
     return Math.min(length - dist, dist);
-}
-
-function getLinesIndices(pins: Pin[], dimensions: Dimensions) {
-    const linesIndices: Map<string, number[]> = new Map();
-    for (let i = 0; i < pins.length; i++) {
-        for (let j = i + 1; j < pins.length; j++) {
-            const indices = getLineIndices(pins[i], pins[j], dimensions);
-            const lineKey = toLineKey(pins[i].id, pins[j].id);
-            linesIndices.set(lineKey, indices);
-        }
-    }
-    return linesIndices;
 }
 
 function toLineKey(pin1Id: number, pin2Id: number) {
