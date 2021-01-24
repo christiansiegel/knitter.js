@@ -133,6 +133,26 @@ export class UserInterface {
         });
     }
 
+    drawLinesBetweenPins(pins: Pin[]): void {
+        if (pins.length < 2) return;
+        const ctx = <CanvasRenderingContext2D>this.outputCanvas.getContext('2d');
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(pins[0].x - 0.5, pins[0].y - 0.5);
+        let prevPin = pins[0];
+        pins.slice(1).forEach((pin) => {
+            // Generate third point to introduce line variation (bezier control point)
+            const rand = 10 - Math.random() * 20;
+            const cx = rand + (prevPin.x + pin.x) / 2;
+            const cy = rand + (prevPin.y + pin.y) / 2;
+            ctx.bezierCurveTo(cx, cy, cx, cy, pin.x - 0.5, pin.y - 0.5);
+            //ctx.lineTo(pin.x - 0.5, pin.y - 0.5);
+            prevPin = pin;
+        });
+        ctx.stroke();
+    }
+
     setShape(shape: Shape): void {
         if (shape === 'circle') {
             this.circleShapeButton.classList.add('is-info', 'is-selected');
