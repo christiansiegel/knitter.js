@@ -1,143 +1,123 @@
-import { Dimensions, Pin, Point, Shape } from './types';
+import { Dimensions, Pin, Shape } from './types';
 
-interface PatternParams {
-    pins: Pin[];
+interface Params {
+    numberOfPins: number;
+    shape: Shape;
     dimensions: Dimensions;
     pixels: Uint8ClampedArray;
     fadeRate: number;
     minimalDistance: number;
 }
 
-let nextId = 0;
-
-class PatternCalculation {
-    private _id: number;
-
-    currPinId = -1;
-    usedCombos: { [key: string]: boolean } = {};
-
-    constructor(private _params: PatternParams) {
-        this._id = ++nextId;
-    }
-
-    get id(): number {
-        return this._id;
-    }
-
-    get pins(): Pin[] {
-        return this._params.pins;
-    }
-
-    get minimalDistance(): number {
-        return this._params.minimalDistance;
-    }
-
-    get fadeRate(): number {
-        return this._params.fadeRate;
-    }
-
-    get pixels(): Uint8ClampedArray {
-        return this._params.pixels;
-    }
-
-    get dimensions(): Dimensions {
-        return this._params.dimensions;
-    }
+interface Context extends Params {
+    id: number;
+    pinsId: string;
+    pins: Pin[];
+    usedPinPairIds: { [key: string]: boolean };
+    currentPin?: Pin;
 }
 
-class PatternCalculationExpired extends Error {
+class ContextExpired extends Error {
     constructor(calculationId: number) {
-        super(`Pattern calculation #${calculationId} expired!`);
+        super(`Context #${calculationId} expired!`);
     }
 }
 
 export class Core {
-    private patternCalculation?: PatternCalculation;
+    private ctx?: Context;
 
-    calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
-        if (shape === 'circle') {
-            return calcCirclePins(numberOfPins, dimensions);
-        } else {
-            return calcSquarePins(numberOfPins, dimensions);
-        }
+    initContext(params: Params): number {
+        const pinsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
+        const pins =
+            this.ctx?.pinsId === pinsId
+                ? this.ctx.pins
+                : calcPins(params.numberOfPins, params.dimensions, params.shape);
+        this.ctx = {
+            id: (this.ctx?.id || 0) + 1,
+            pinsId: pinsId,
+            pins: pins,
+            usedPinPairIds: {},
+            ...params,
+        };
+        console.log('[core] new context #', this.ctx.id);
+        return this.ctx.id;
     }
 
-    initPatternCalculation(params: PatternParams): number {
-        //this.patternCalculation?.linesIndices?.clear();
-        cache = {};
-        this.patternCalculation = new PatternCalculation(params);
-        console.log('[core] new calculation', this.patternCalculation);
-        return this.patternCalculation.id;
+    getPins(contextId: number): Pin[] {
+        return this.getContext(contextId).pins;
     }
 
-    async calcPattern(calculationId: number, limit: number): Promise<number[]> {
-        if (!this.patternCalculation) {
-            throw new Error('Pattern calculation not initialized!');
-        }
-        if (this.patternCalculation.id !== calculationId) {
-            throw new PatternCalculationExpired(calculationId);
-        }
+    calcPattern(contextId: number, limit: number): number[] {
+        const ctx = this.getContext(contextId);
 
         const result: number[] = [];
 
-        const pins = this.patternCalculation.pins;
-
         for (let i = 0; i < limit; ++i) {
-            const currPinId = this.patternCalculation.currPinId;
-            if (currPinId < 0) {
-                this.patternCalculation.currPinId = 0;
+            const currentPin = ctx.currentPin;
+            if (!currentPin) {
+                ctx.currentPin = ctx.pins[0];
                 result.push(0);
                 continue;
             }
-            const currPin = pins[currPinId];
 
-            const numberOfPins = this.patternCalculation.pins.length;
-            const width = this.patternCalculation.dimensions.width;
-            const minimalDistance = this.patternCalculation.minimalDistance;
-            const usedCombos = this.patternCalculation.usedCombos;
-            const possibleNextPins = pins
-                .filter((nextPin) => !(pointCombination(currPin, nextPin) in usedCombos))
-                .filter(
-                    (nextPin) => circularArrayIndexDistance(currPinId, nextPin.id, numberOfPins) >= minimalDistance,
-                );
+            const usedPinPairsFilter = (nextPin: Pin) => {
+                return !(makePinPairId(currentPin, nextPin) in ctx.usedPinPairIds);
+            };
+            const minDistanceFilter = (nextPin: Pin) => {
+                return circularArrayIndexDistance(currentPin.id, nextPin.id, ctx.pins.length) >= ctx.minimalDistance;
+            };
+            const lineScoreMapper = (nextPin: Pin) => {
+                return calcLineScore(ctx.pixels, ctx.dimensions.width, currentPin, nextPin);
+            };
 
-            // todo: square pattern distances
-
-            const pixels = this.patternCalculation.pixels;
-
-            const possibleNextLinesScores = possibleNextPins.map((nextPin) =>
-                calcLineScore(pixels, width, currPin, nextPin),
-            );
-
+            let possibleNextPins = ctx.pins.filter(usedPinPairsFilter);
+            possibleNextPins = possibleNextPins.filter(minDistanceFilter); // todo: square pattern distances
+            const possibleNextLinesScores = possibleNextPins.map(lineScoreMapper);
             const nextPin = possibleNextPins[indexOfMax(possibleNextLinesScores)];
 
-            reduceLine(pixels, width, currPin, nextPin, this.patternCalculation.fadeRate);
+            reduceLine(ctx.pixels, ctx.dimensions.width, currentPin, nextPin, ctx.fadeRate);
 
-            this.patternCalculation.usedCombos[pointCombination(currPin, nextPin)] = true;
-            this.patternCalculation.currPinId = nextPin.id;
+            ctx.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
+            ctx.currentPin = nextPin;
             result.push(nextPin.id);
         }
 
         return result;
     }
+
+    private getContext(contextId: number): Context {
+        if (!this.ctx) {
+            throw new Error('Pattern context not initialized!');
+        }
+        if (this.ctx.id !== contextId) {
+            throw new ContextExpired(contextId);
+        }
+        return this.ctx;
+    }
 }
 
-function indexOfMax(arr: number[]) {
-    if (arr.length === 0) {
-        return -1;
+function calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
+    pinPairId2LineIndices = {};
+    if (shape === 'circle') {
+        return calcCirclePins(numberOfPins, dimensions);
+    } else {
+        return calcSquarePins(numberOfPins, dimensions);
     }
-    let max = arr[0];
-    let maxIndex = 0;
-    for (let i = 1; i < arr.length; i++) {
-        if (arr[i] > max) {
+}
+
+function indexOfMax(arr: number[]): number {
+    let max = -Infinity;
+    let maxIndex = -1;
+    for (const [i, v] of arr.entries()) {
+        if (v > max) {
             maxIndex = i;
-            max = arr[i];
+            max = v;
         }
     }
     return maxIndex;
 }
 
-function calcLineScore(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin) {
+function calcLineScore(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin): number {
     const indices = getLineIndices(a, b, width);
     return 0xff - indices.reduce((sum, idx) => sum + pixels[idx], 0) / indices.length;
 }
@@ -153,24 +133,15 @@ function circularArrayIndexDistance(idx1: number, idx2: number, length: number):
     return Math.min(length - dist, dist);
 }
 
-let cache: { [key: string]: number[] } = {};
+let pinPairId2LineIndices: { [key: number]: number[] } = {};
 
-function comparePoints(a: Point, b: Point): number {
-    if (a.x < b.x) return -1;
-    if (a.x > b.x) return +1;
-    if (a.y < b.y) return -1;
-    if (a.y > b.y) return +1;
-    return 0;
+function makePinPairId(a: Pin, b: Pin): number {
+    return a.id < b.id ? a.id * 1024 + b.id : b.id * 1024 + a.id;
 }
 
-function pointCombination(a: Point, b: Point): string {
-    [a, b] = comparePoints(a, b) > 0 ? [a, b] : [b, a];
-    return JSON.stringify({ ax: a.x, ay: a.y, bx: b.x, by: b.y });
-}
-
-function getLineIndices(a: Point, b: Point, width: number): number[] {
-    const key = pointCombination(a, b) + width;
-    const cached = cache[key];
+function getLineIndices(a: Pin, b: Pin, width: number): number[] {
+    const key = makePinPairId(a, b);
+    const cached = pinPairId2LineIndices[key];
     if (cached) return cached;
     const dx = Math.abs(b.x - a.x),
         dy = -Math.abs(b.y - a.y),
@@ -193,7 +164,7 @@ function getLineIndices(a: Point, b: Point, width: number): number[] {
             curr.y += sy;
         }
     }
-    cache[key] = indices;
+    pinPairId2LineIndices[key] = indices;
     return indices;
 }
 

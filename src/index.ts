@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const core = await new (wrap<typeof Core>(new Worker('worker.ts')))();
 
     autorun(async () => {
-        const pins = await core.calcPins(STATE.numberOfPins, { ...STATE.dimensions }, STATE.shape);
-        STATE.setNumberOfPins(pins.length);
-        STATE.setPins(pins);
+        //STATE.setNumberOfPins(pins.length); // TODO update that somehow
+        console.log('setPins');
+        STATE.pins && ui.setPins(STATE.pins);
     });
 
     autorun(async () => {
@@ -36,30 +36,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     autorun(async () => {
-        if (!STATE.pins) return;
-        const pins = STATE.pins;
-        ui.setPins(pins);
-
         if (!STATE.pixels) return;
-        const calculationId = await core.initPatternCalculation({
-            pins: pins,
+        const contextId = await core.initContext({
             dimensions: { ...STATE.dimensions },
             pixels: STATE.pixels,
             fadeRate: STATE.fadeRate,
             minimalDistance: STATE.minimalDistance,
+            shape: STATE.shape,
+            numberOfPins: STATE.numberOfPins,
         });
+        const pins = await core.getPins(contextId);
+        STATE.pins = pins;
         const pattern: Pin[] = [];
         while (true) {
             try {
                 const limit = 100;
-                const nextIds = await core.calcPattern(calculationId, limit);
+                const nextIds = await core.calcPattern(contextId, limit);
                 const next = nextIds.map((id) => pins[id]);
                 pattern.push(...next);
                 ui.drawLinesBetweenPins(pattern.slice(pattern.length - limit + 1, pattern.length));
             } catch (e) {
                 return;
             }
-            console.log('new pattern bits for calc id', calculationId);
+            console.log('new pattern bits for ctx #', contextId);
             // TODO: abort criteria: enough strings calculated
             if (pattern.length > 3000) return;
         }
