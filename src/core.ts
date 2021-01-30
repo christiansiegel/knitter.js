@@ -11,7 +11,7 @@ interface Params {
 
 interface Context extends Params {
     id: number;
-    pinsId: string;
+    pinParamsId: string;
     pins: Pin[];
     usedPinPairIds: { [key: string]: boolean };
     currentPin?: Pin;
@@ -24,17 +24,21 @@ class ContextExpired extends Error {
 }
 
 export class Core {
-    private ctx?: Context;
+    private ctx: Context | undefined = undefined;
+    private lineIndicesCache: { [key: number]: number[] } = {};
 
     initContext(params: Params): number {
-        const pinsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
-        const pins =
-            this.ctx?.pinsId === pinsId
-                ? this.ctx.pins
-                : calcPins(params.numberOfPins, params.dimensions, params.shape);
+        const pinParamsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
+        let pins;
+        if (this.ctx?.pinParamsId === pinParamsId) {
+            pins = this.ctx.pins;
+        } else {
+            pins = calcPins(params.numberOfPins, params.dimensions, params.shape);
+            this.lineIndicesCache = {};
+        }
         this.ctx = {
             id: (this.ctx?.id || 0) + 1,
-            pinsId: pinsId,
+            pinParamsId: pinParamsId,
             pins: pins,
             usedPinPairIds: {},
             ...params,
@@ -67,7 +71,8 @@ export class Core {
                 return circularArrayIndexDistance(currentPin.id, nextPin.id, ctx.pins.length) >= ctx.minimalDistance;
             };
             const lineScoreMapper = (nextPin: Pin) => {
-                return calcLineScore(ctx.pixels, ctx.dimensions.width, currentPin, nextPin);
+                const lineIndices = this.getLineIndicesCached(currentPin, nextPin, ctx.dimensions.width);
+                return calcScore(ctx.pixels, lineIndices);
             };
 
             let possibleNextPins = ctx.pins.filter(usedPinPairsFilter);
@@ -75,7 +80,8 @@ export class Core {
             const possibleNextLinesScores = possibleNextPins.map(lineScoreMapper);
             const nextPin = possibleNextPins[indexOfMax(possibleNextLinesScores)];
 
-            reduceLine(ctx.pixels, ctx.dimensions.width, currentPin, nextPin, ctx.fadeRate);
+            const lineIndices = this.getLineIndicesCached(currentPin, nextPin, ctx.dimensions.width);
+            fadePixels(ctx.pixels, lineIndices, ctx.fadeRate);
 
             ctx.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
             ctx.currentPin = nextPin;
@@ -94,10 +100,19 @@ export class Core {
         }
         return this.ctx;
     }
+
+    private getLineIndicesCached(a: Pin, b: Pin, width: number): number[] {
+        const key = makePinPairId(a, b);
+        if (key in this.lineIndicesCache) {
+            return this.lineIndicesCache[key];
+        }
+        const indices = getLineIndices(a, b, width);
+        this.lineIndicesCache[key] = indices;
+        return indices;
+    }
 }
 
 function calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
-    pinPairId2LineIndices = {};
     if (shape === 'circle') {
         return calcCirclePins(numberOfPins, dimensions);
     } else {
@@ -117,14 +132,12 @@ function indexOfMax(arr: number[]): number {
     return maxIndex;
 }
 
-function calcLineScore(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin): number {
-    const indices = getLineIndices(a, b, width);
+function calcScore(pixels: Uint8ClampedArray, indices: number[]): number {
     return 0xff - indices.reduce((sum, idx) => sum + pixels[idx], 0) / indices.length;
 }
 
-function reduceLine(pixels: Uint8ClampedArray, width: number, a: Pin, b: Pin, fadeRate: number) {
+function fadePixels(pixels: Uint8ClampedArray, indices: number[], fadeRate: number) {
     const fade = Math.round((0xff * fadeRate) / 100);
-    const indices = getLineIndices(a, b, width);
     indices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + fade)));
 }
 
@@ -133,16 +146,11 @@ function circularArrayIndexDistance(idx1: number, idx2: number, length: number):
     return Math.min(length - dist, dist);
 }
 
-let pinPairId2LineIndices: { [key: number]: number[] } = {};
-
 function makePinPairId(a: Pin, b: Pin): number {
     return a.id < b.id ? a.id * 1024 + b.id : b.id * 1024 + a.id;
 }
 
 function getLineIndices(a: Pin, b: Pin, width: number): number[] {
-    const key = makePinPairId(a, b);
-    const cached = pinPairId2LineIndices[key];
-    if (cached) return cached;
     const dx = Math.abs(b.x - a.x),
         dy = -Math.abs(b.y - a.y),
         sx = a.x < b.x ? 1 : -1,
@@ -164,7 +172,6 @@ function getLineIndices(a: Pin, b: Pin, width: number): number[] {
             curr.y += sy;
         }
     }
-    pinPairId2LineIndices[key] = indices;
     return indices;
 }
 

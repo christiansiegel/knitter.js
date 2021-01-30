@@ -6,6 +6,9 @@ import { convertImageDataUrlToGrayPixels } from './util/image-converter';
 import { STATE } from './state';
 import { Pin } from './types';
 
+const worker = new Worker('worker.ts');
+const WorkerCore = wrap<typeof Core>(worker);
+
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
 
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     autorun(() => ui.setFadeRate(STATE.fadeRate));
     autorun(() => ui.setMinimalDistance(STATE.minimalDistance));
 
-    const core = await new (wrap<typeof Core>(new Worker('worker.ts')))();
+    const core = await new WorkerCore();
 
     autorun(async () => {
         //STATE.setNumberOfPins(pins.length); // TODO update that somehow
@@ -45,22 +48,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             shape: STATE.shape,
             numberOfPins: STATE.numberOfPins,
         });
-        const pins = await core.getPins(contextId);
-        STATE.pins = pins;
-        const pattern: Pin[] = [];
-        while (true) {
-            try {
+        try {
+            const pins = await core.getPins(contextId);
+            STATE.pins = pins;
+            const pattern: Pin[] = [];
+            while (true) {
                 const limit = 100;
                 const nextIds = await core.calcPattern(contextId, limit);
                 const next = nextIds.map((id) => pins[id]);
                 pattern.push(...next);
                 ui.drawLinesBetweenPins(pattern.slice(pattern.length - limit + 1, pattern.length));
-            } catch (e) {
-                return;
+                console.log('new pattern bits for ctx #', contextId);
+                // TODO: abort criteria: enough strings calculated
+                if (pattern.length > 3000) return;
             }
-            console.log('new pattern bits for ctx #', contextId);
-            // TODO: abort criteria: enough strings calculated
-            if (pattern.length > 3000) return;
+        } catch (e) {
+            return;
         }
     });
 });
