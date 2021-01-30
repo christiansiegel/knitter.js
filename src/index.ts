@@ -15,12 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ui.onInputImageSelected = STATE.setImageDataUrl;
     ui.onFadeParamChange = STATE.setFadeRate;
     ui.onPinsParamChange = STATE.setNumberOfPins;
+    ui.onStringsParamChange = STATE.setNumberOfStrings;
     ui.onDistanceParamChange = STATE.setMinimalDistance;
     ui.onShapeSelected = STATE.setShape;
 
     autorun(() => ui.setShape(STATE.shape));
     autorun(() => STATE.imageDataUrl && ui.setInputImageSrc(STATE.imageDataUrl));
     autorun(() => ui.setNumberOfPins(STATE.numberOfPins));
+    autorun(() => ui.setNumberOfStrings(STATE.numberOfStrings));
     autorun(() => ui.setFadeRate(STATE.fadeRate));
     autorun(() => ui.setMinimalDistance(STATE.minimalDistance));
 
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     autorun(async () => {
         if (!STATE.pixels) return;
+        const numberOfStrings = STATE.numberOfStrings;
         const contextId = await core.initContext({
             dimensions: { ...STATE.dimensions },
             pixels: STATE.pixels,
@@ -48,22 +51,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             shape: STATE.shape,
             numberOfPins: STATE.numberOfPins,
         });
+        const pattern: Pin[] = [];
         try {
             const pins = await core.getPins(contextId);
-            STATE.pins = pins;
-            const pattern: Pin[] = [];
-            while (true) {
+            STATE.setPins(pins);
+            while (pattern.length < numberOfStrings) {
                 const limit = 100;
                 const nextIds = await core.calcPattern(contextId, limit);
                 const next = nextIds.map((id) => pins[id]);
                 pattern.push(...next);
                 ui.drawLinesBetweenPins(pattern.slice(pattern.length - limit + 1, pattern.length));
                 console.log('new pattern bits for ctx #', contextId);
-                // TODO: abort criteria: enough strings calculated
-                if (pattern.length > 3000) return;
             }
         } catch (e) {
-            return;
+            return; // calculation expired
         }
+        STATE.setPattern(pattern);
     });
 });

@@ -109,6 +109,10 @@ export class UserInterface {
         this.pinsParamSlider.setValue(numberOfPins);
     }
 
+    setNumberOfStrings(numberOfStrings: number): void {
+        this.stringsParamSlider.setValue(numberOfStrings);
+    }
+
     setFadeRate(fadeRate: number): void {
         this.fadeParamSlider.setValue(fadeRate);
     }
