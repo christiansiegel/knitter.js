@@ -1,6 +1,7 @@
-import { autorun, configure, makeAutoObservable, observable } from 'mobx';
+import { autorun, computed, configure, makeAutoObservable, observable } from 'mobx';
 import { Dimensions, Pin, Shape } from './types';
 import { LocalStorage } from './util/local-storage';
+import { CoreParams } from './core';
 
 interface Parameters {
     imageDataUrl?: string;
@@ -15,6 +16,8 @@ interface Parameters {
 interface State extends Parameters {
     pins?: Pin[];
     pixels?: Uint8ClampedArray;
+    pattern?: number[];
+    coreId: string;
 }
 
 const defaultParams: Parameters = {
@@ -39,7 +42,8 @@ class OvervableState implements State {
     minimalDistance: number;
     pins?: Pin[] = undefined;
     pixels?: Uint8ClampedArray = undefined;
-    pattern?: Pin[] = undefined;
+    pattern?: number[] = undefined;
+    coreId = '';
 
     constructor(init: Parameters) {
         this.imageDataUrl = init.imageDataUrl;
@@ -53,6 +57,8 @@ class OvervableState implements State {
             pins: observable.ref,
             pixels: observable.ref,
             pattern: observable.ref,
+            coreParams: computed,
+            isCoreInitialized: computed,
         });
     }
 
@@ -65,7 +71,25 @@ class OvervableState implements State {
     setMinimalDistance = (minimalDistance: number) => (this.minimalDistance = minimalDistance);
     setPins = (pins: Pin[]) => (this.pins = pins);
     setPixels = (pixels: Uint8ClampedArray) => (this.pixels = pixels);
-    setPattern = (pattern: Pin[]) => (this.pattern = pattern);
+    setPattern = (pattern: number[]) => (this.pattern = pattern);
+    setCoreId = (coreId: string) => (this.coreId = coreId);
+
+    get coreParams(): CoreParams | undefined {
+        if (!this.pixels) return undefined;
+        return {
+            id: Date.now() + '' + Math.random(),
+            dimensions: { ...this.dimensions },
+            pixels: this.pixels,
+            fadeRate: this.fadeRate,
+            minimalDistance: this.minimalDistance,
+            shape: this.shape,
+            numberOfPins: this.numberOfPins,
+        };
+    }
+
+    get isCoreInitialized(): boolean {
+        return this.coreId === STATE.coreParams?.id;
+    }
 }
 
 export const STATE = new OvervableState({

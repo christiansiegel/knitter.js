@@ -1,33 +1,27 @@
 import { Dimensions, Pin, Shape } from './types';
 
-interface Params {
+export interface CoreParams {
     numberOfPins: number;
     shape: Shape;
     dimensions: Dimensions;
     pixels: Uint8ClampedArray;
     fadeRate: number;
     minimalDistance: number;
+    [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-interface Context extends Params {
-    id: number;
+interface Context extends CoreParams {
     pinParamsId: string;
     pins: Pin[];
-    usedPinPairIds: { [key: string]: boolean };
-    currentPin?: Pin;
-}
-
-class ContextExpired extends Error {
-    constructor(calculationId: number) {
-        super(`Context #${calculationId} expired!`);
-    }
+    usedPinPairIds: { [pinPairId: string]: boolean };
+    pattern: number[];
 }
 
 export class Core {
     private ctx: Context | undefined = undefined;
-    private lineIndicesCache: { [key: number]: number[] } = {};
+    private lineIndicesCache: { [pinPairId: number]: number[] } = {};
 
-    initContext(params: Params): number {
+    init(params: CoreParams): Pin[] {
         const pinParamsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
         let pins;
         if (this.ctx?.pinParamsId === pinParamsId) {
@@ -37,32 +31,31 @@ export class Core {
             this.lineIndicesCache = {};
         }
         this.ctx = {
-            id: (this.ctx?.id || 0) + 1,
             pinParamsId: pinParamsId,
             pins: pins,
             usedPinPairIds: {},
+            pattern: [0],
             ...params,
         };
-        console.log('[core] new context #', this.ctx.id);
-        return this.ctx.id;
+        return pins;
     }
 
-    getPins(contextId: number): Pin[] {
-        return this.getContext(contextId).pins;
+    getPattern(): number[] {
+        const ctx = this.ctx;
+        if (!ctx) {
+            throw new Error('Pattern context not initialized!');
+        }
+        return ctx.pattern;
     }
 
-    calcPattern(contextId: number, limit: number): number[] {
-        const ctx = this.getContext(contextId);
+    calcPattern(limit: number): number[] {
+        const ctx = this.ctx;
+        if (!ctx) {
+            throw new Error('Pattern context not initialized!');
+        }
 
-        const result: number[] = [];
-
-        for (let i = 0; i < limit; ++i) {
-            const currentPin = ctx.currentPin;
-            if (!currentPin) {
-                ctx.currentPin = ctx.pins[0];
-                result.push(0);
-                continue;
-            }
+        for (let i = ctx.pattern.length; i < limit; ++i) {
+            const currentPin = ctx.pins[ctx.pattern[ctx.pattern.length - 1]];
 
             const usedPinPairsFilter = (nextPin: Pin) => {
                 return !(makePinPairId(currentPin, nextPin) in ctx.usedPinPairIds);
@@ -77,28 +70,21 @@ export class Core {
 
             let possibleNextPins = ctx.pins.filter(usedPinPairsFilter);
             possibleNextPins = possibleNextPins.filter(minDistanceFilter); // todo: square pattern distances
+            if (possibleNextPins.length === 0) {
+                return ctx.pattern; // all pins used
+            }
             const possibleNextLinesScores = possibleNextPins.map(lineScoreMapper);
             const nextPin = possibleNextPins[indexOfMax(possibleNextLinesScores)];
+            if (nextPin === undefined) console.log(possibleNextPins);
 
             const lineIndices = this.getLineIndicesCached(currentPin, nextPin, ctx.dimensions.width);
             fadePixels(ctx.pixels, lineIndices, ctx.fadeRate);
 
             ctx.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
-            ctx.currentPin = nextPin;
-            result.push(nextPin.id);
+            ctx.pattern.push(nextPin.id);
         }
 
-        return result;
-    }
-
-    private getContext(contextId: number): Context {
-        if (!this.ctx) {
-            throw new Error('Pattern context not initialized!');
-        }
-        if (this.ctx.id !== contextId) {
-            throw new ContextExpired(contextId);
-        }
-        return this.ctx;
+        return ctx.pattern.slice(0, limit);
     }
 
     private getLineIndicesCached(a: Pin, b: Pin, width: number): number[] {
@@ -113,11 +99,7 @@ export class Core {
 }
 
 function calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
-    if (shape === 'circle') {
-        return calcCirclePins(numberOfPins, dimensions);
-    } else {
-        return calcSquarePins(numberOfPins, dimensions);
-    }
+    return (shape === 'circle' ? calcCirclePins : calcSquarePins)(numberOfPins, dimensions);
 }
 
 function indexOfMax(arr: number[]): number {
@@ -179,7 +161,7 @@ function calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
     const diameter = Math.min(dimensions.width, dimensions.height);
     const xOffset = (dimensions.width - diameter) / 2;
     const yOffset = (dimensions.height - diameter) / 2;
-    const radius = diameter / 2.0;
+    const radius = diameter / 2.0 - 1; // TODO: otherwise there will be a pin with x/y = width/height?
     const angle = (Math.PI * 2.0) / numberOfPins;
     const pins = [];
     for (let i = 0; i < numberOfPins; i++) {
@@ -193,7 +175,7 @@ function calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
 }
 
 function calcSquarePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
-    const size = Math.min(dimensions.width, dimensions.height);
+    const size = Math.min(dimensions.width, dimensions.height) - 2; // TODO: otherwise there will be a pin with x/y = width/height?
     const xOffset = (dimensions.width - size) / 2;
     const yOffset = (dimensions.height - size) / 2;
     const pinsPerSide = Math.floor(numberOfPins / 4);

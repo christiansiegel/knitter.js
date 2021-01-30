@@ -1,4 +1,5 @@
 import { Pin, Shape } from './types';
+import { RandomNumberGenerator } from './util/random-number-generator';
 
 class Slider {
     private root: HTMLDivElement;
@@ -45,6 +46,9 @@ export class UserInterface {
     private stringsParamSlider: Slider;
     private fadeParamSlider: Slider;
     private distanceParamSlider: Slider;
+
+    private pins: Pin[] = [];
+    private pattern: number[] = [];
 
     onInputImageSelected: ((dataUrl: string) => void) | null = null;
     onPinsParamChange: ((value: number) => void) | null = null;
@@ -122,7 +126,24 @@ export class UserInterface {
     }
 
     setPins(pins: Pin[]): void {
+        this.pins = pins;
+        this.pattern = [];
+        this.renderCanvas();
+    }
+
+    setPattern(pattern: number[]): void {
+        this.pattern = pattern;
+        this.renderCanvas();
+    }
+
+    private renderCanvas(): void {
         const ctx = <CanvasRenderingContext2D>this.outputCanvas.getContext('2d');
+        this.drawPins(ctx);
+        this.drawPattern(ctx);
+    }
+
+    private drawPins(ctx: CanvasRenderingContext2D) {
+        const pins = this.pins;
         const xCoordinates = [...pins.map((pin) => pin.x)];
         const yCoordinates = [...pins.map((pin) => pin.y)];
         const xMin = Math.min(...xCoordinates);
@@ -137,17 +158,19 @@ export class UserInterface {
         });
     }
 
-    drawLinesBetweenPins(pins: Pin[]): void {
-        if (pins.length < 2) return;
-        const ctx = <CanvasRenderingContext2D>this.outputCanvas.getContext('2d');
+    private drawPattern(ctx: CanvasRenderingContext2D) {
+        const pattern = this.pattern;
+        if (pattern.length < 2) return;
+        const pins = pattern.map((idx) => this.pins[idx]);
         ctx.lineWidth = 1;
         ctx.globalAlpha = 0.25;
         ctx.beginPath();
         ctx.moveTo(pins[0].x - 0.5, pins[0].y - 0.5);
         let prevPin = pins[0];
+        const rng = new RandomNumberGenerator(); // needs to be deterministic
         pins.slice(1).forEach((pin) => {
             // Generate third point to introduce line variation (bezier control point)
-            const rand = 10 - Math.random() * 20;
+            const rand = rng.getRandomFloat(-10, 10);
             const cx = rand + (prevPin.x + pin.x) / 2;
             const cy = rand + (prevPin.y + pin.y) / 2;
             ctx.bezierCurveTo(cx, cy, cx, cy, pin.x - 0.5, pin.y - 0.5);
