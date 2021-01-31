@@ -44,13 +44,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const coreParams = STATE.coreParams;
         if (!coreParams) return;
         const token = tokenFactory.getExclusiveToken('core init');
-        const pins = await core.init(coreParams);
+        await core.init(coreParams);
+        if (token.cancelled) return;
+        STATE.setCoreId(coreParams.id);
+    });
+
+    autorun(async () => {
+        const token = tokenFactory.getExclusiveToken('get pins');
+        if (!STATE.isCoreInitialized) return;
+        const pins = await core.getPins();
         if (token.cancelled) return;
         STATE.setPins(pins);
-        if (pins.length < coreParams.numberOfPins) {
-            STATE.setNumberOfPins(pins.length);
-        }
-        STATE.setCoreId(coreParams.id);
+        STATE.setNumberOfPins(pins.length);
     });
 
     autorun(async () => {
@@ -63,9 +68,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             STATE.setPattern(pattern.slice(0, numberOfStrings));
             return;
         }
-        const batchSize = 100;
-        for (let requestedNrOfStrings = pattern.length; ; requestedNrOfStrings += batchSize) {
-            requestedNrOfStrings = Math.min(numberOfStrings, requestedNrOfStrings);
+        while (true) {
+            const requestedNrOfStrings = Math.min(pattern.length + 100, numberOfStrings);
             pattern = await core.calcPattern(requestedNrOfStrings);
             if (token.cancelled) return;
             STATE.setPattern(pattern);

@@ -18,42 +18,44 @@ interface Context extends CoreParams {
 }
 
 export class Core {
-    private ctx: Context | undefined = undefined;
-    private lineIndicesCache: { [pinPairId: number]: number[] } = {};
+    private _ctx: Context | undefined = undefined;
+    private _lineIndicesCache: { [pinPairId: number]: number[] } = {};
 
-    init(params: CoreParams): Pin[] {
+    get ctx(): Context {
+        if (!this._ctx) {
+            throw new Error('Pattern context not initialized!');
+        }
+        return this._ctx;
+    }
+
+    init(params: CoreParams): void {
         const pinParamsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
         let pins;
-        if (this.ctx?.pinParamsId === pinParamsId) {
-            pins = this.ctx.pins;
+        if (this._ctx?.pinParamsId === pinParamsId) {
+            pins = this._ctx.pins;
         } else {
             pins = calcPins(params.numberOfPins, params.dimensions, params.shape);
-            this.lineIndicesCache = {};
+            this._lineIndicesCache = {};
         }
-        this.ctx = {
+        this._ctx = {
             pinParamsId: pinParamsId,
             pins: pins,
             usedPinPairIds: {},
             pattern: [0],
             ...params,
         };
-        return pins;
+    }
+
+    getPins(): Pin[] {
+        return this.ctx.pins;
     }
 
     getPattern(): number[] {
-        const ctx = this.ctx;
-        if (!ctx) {
-            throw new Error('Pattern context not initialized!');
-        }
-        return ctx.pattern;
+        return this.ctx.pattern;
     }
 
     calcPattern(limit: number): number[] {
         const ctx = this.ctx;
-        if (!ctx) {
-            throw new Error('Pattern context not initialized!');
-        }
-
         for (let i = ctx.pattern.length; i < limit; ++i) {
             const currentPin = ctx.pins[ctx.pattern[ctx.pattern.length - 1]];
 
@@ -89,11 +91,11 @@ export class Core {
 
     private getLineIndicesCached(a: Pin, b: Pin, width: number): number[] {
         const key = makePinPairId(a, b);
-        if (key in this.lineIndicesCache) {
-            return this.lineIndicesCache[key];
+        if (key in this._lineIndicesCache) {
+            return this._lineIndicesCache[key];
         }
         const indices = getLineIndices(a, b, width);
-        this.lineIndicesCache[key] = indices;
+        this._lineIndicesCache[key] = indices;
         return indices;
     }
 }
