@@ -2,10 +2,9 @@ import { autorun, computed, configure, makeAutoObservable, observable } from 'mo
 import { Dimensions, Pin, Shape } from './types';
 import { LocalStorage } from './util/local-storage';
 import { CoreParams } from './core';
-import { EXAMPLE_IMAGE_DATA_URL } from './example.png.base64';
 
 interface Parameters {
-    imageDataUrl?: string;
+    imageDataUrl: string;
     dimensions: Dimensions;
     shape: Shape;
     numberOfPins: number;
@@ -14,28 +13,11 @@ interface Parameters {
     minimalDistance: number;
 }
 
-interface State extends Parameters {
-    pins?: Pin[];
-    pixels?: Uint8ClampedArray;
-    pattern?: number[];
-    coreId: string;
-}
-
-const defaultParams: Parameters = {
-    imageDataUrl: EXAMPLE_IMAGE_DATA_URL,
-    dimensions: { width: 700, height: 700 },
-    shape: 'circle',
-    numberOfPins: 200,
-    numberOfStrings: 3000,
-    fadeRate: 50,
-    minimalDistance: 10,
-};
-
 configure({
     enforceActions: 'observed',
 });
-class OvervableState implements State {
-    imageDataUrl?: string;
+class State implements Parameters {
+    imageDataUrl: string;
     dimensions: Dimensions;
     shape: Shape;
     numberOfPins: number;
@@ -45,7 +27,8 @@ class OvervableState implements State {
     pins?: Pin[] = undefined;
     pixels?: Uint8ClampedArray = undefined;
     pattern?: number[] = undefined;
-    coreId = '';
+
+    private coreId = '';
 
     constructor(init: Parameters) {
         this.imageDataUrl = init.imageDataUrl;
@@ -90,28 +73,28 @@ class OvervableState implements State {
     }
 
     get isCoreInitialized(): boolean {
-        return this.coreId === STATE.coreParams?.id;
+        return this.coreId === this.coreParams?.id;
     }
 }
-
-export const STATE = new OvervableState({
-    ...defaultParams,
-    ...LocalStorage.loadItems([
-        'imageDataUrl',
-        'dimensions',
-        'numberOfPins',
-        'numberOfStrings',
-        'shape',
-        'numberOfPins',
-        'fadeRate',
-        'minimalDistance',
-    ]),
-});
-
-autorun(() => LocalStorage.saveItem('imageDataUrl', STATE.imageDataUrl));
-autorun(() => LocalStorage.saveItem('dimensions', STATE.dimensions));
-autorun(() => LocalStorage.saveItem('shape', STATE.shape));
-autorun(() => LocalStorage.saveItem('numberOfPins', STATE.numberOfPins));
-autorun(() => LocalStorage.saveItem('numberOfStrings', STATE.numberOfStrings));
-autorun(() => LocalStorage.saveItem('fadeRate', STATE.fadeRate));
-autorun(() => LocalStorage.saveItem('minimalDistance', STATE.minimalDistance));
+export function loadState(defaultParams: Parameters): State {
+    const state = new State({
+        ...defaultParams,
+        ...LocalStorage.loadItems([
+            'imageDataUrl',
+            'dimensions',
+            'numberOfPins',
+            'numberOfStrings',
+            'shape',
+            'fadeRate',
+            'minimalDistance',
+        ]),
+    });
+    autorun(() => LocalStorage.saveItem('imageDataUrl', state.imageDataUrl));
+    autorun(() => LocalStorage.saveItem('dimensions', state.dimensions));
+    autorun(() => LocalStorage.saveItem('shape', state.shape));
+    autorun(() => LocalStorage.saveItem('numberOfPins', state.numberOfPins));
+    autorun(() => LocalStorage.saveItem('numberOfStrings', state.numberOfStrings));
+    autorun(() => LocalStorage.saveItem('fadeRate', state.fadeRate));
+    autorun(() => LocalStorage.saveItem('minimalDistance', state.minimalDistance));
+    return state;
+}

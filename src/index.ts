@@ -3,79 +3,87 @@ import { wrap } from 'comlink';
 import { Core } from './core';
 import { UserInterface } from './ui';
 import { convertImageDataUrlToGrayPixels } from './util/image-converter';
-import { STATE } from './state';
+import { loadState } from './state';
 import { TokenFactory } from './util/token-factory';
+import { EXAMPLE_IMAGE_DATA_URL } from './example.png.base64';
 
+const state = loadState({
+    imageDataUrl: EXAMPLE_IMAGE_DATA_URL,
+    dimensions: { width: 700, height: 700 },
+    shape: 'circle',
+    numberOfPins: 200,
+    numberOfStrings: 3000,
+    fadeRate: 50,
+    minimalDistance: 10,
+});
 const tokenFactory = new TokenFactory();
-
 const worker = new Worker('worker.ts');
 const WorkerCore = wrap<typeof Core>(worker);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
 
-    ui.onInputImageSelected = STATE.setImageDataUrl;
-    ui.onFadeParamChange = STATE.setFadeRate;
-    ui.onPinsParamChange = STATE.setNumberOfPins;
-    ui.onStringsParamChange = STATE.setNumberOfStrings;
-    ui.onDistanceParamChange = STATE.setMinimalDistance;
-    ui.onShapeSelected = STATE.setShape;
+    ui.onInputImageSelected = state.setImageDataUrl;
+    ui.onFadeParamChange = state.setFadeRate;
+    ui.onPinsParamChange = state.setNumberOfPins;
+    ui.onStringsParamChange = state.setNumberOfStrings;
+    ui.onDistanceParamChange = state.setMinimalDistance;
+    ui.onShapeSelected = state.setShape;
 
-    autorun(() => ui.setShape(STATE.shape));
-    autorun(() => STATE.imageDataUrl && ui.setInputImageSrc(STATE.imageDataUrl));
-    autorun(() => ui.setNumberOfPins(STATE.numberOfPins));
-    autorun(() => ui.setNumberOfStrings(STATE.numberOfStrings));
-    autorun(() => ui.setFadeRate(STATE.fadeRate));
-    autorun(() => ui.setMinimalDistance(STATE.minimalDistance));
-    autorun(() => ui.setPins(STATE.pins || []));
-    autorun(() => ui.setPattern(STATE.pattern || []));
+    autorun(() => ui.setShape(state.shape));
+    autorun(() => ui.setInputImageSrc(state.imageDataUrl));
+    autorun(() => ui.setNumberOfPins(state.numberOfPins));
+    autorun(() => ui.setNumberOfStrings(state.numberOfStrings));
+    autorun(() => ui.setFadeRate(state.fadeRate));
+    autorun(() => ui.setMinimalDistance(state.minimalDistance));
+    autorun(() => ui.setPins(state.pins || []));
+    autorun(() => ui.setPattern(state.pattern || []));
 
     const core = await new WorkerCore();
 
     autorun(async () => {
-        if (!STATE.imageDataUrl) return;
+        if (!state.imageDataUrl) return;
         const token = tokenFactory.getExclusiveToken('image conversion');
-        const pixels = await convertImageDataUrlToGrayPixels(STATE.imageDataUrl, STATE.dimensions);
+        const pixels = await convertImageDataUrlToGrayPixels(state.imageDataUrl, state.dimensions);
         if (token.cancelled) return;
-        STATE.setPixels(pixels);
+        state.setPixels(pixels);
     });
 
     autorun(async () => {
-        const coreParams = STATE.coreParams;
+        const coreParams = state.coreParams;
         if (!coreParams) return;
         const token = tokenFactory.getExclusiveToken('core init');
         await core.init(coreParams);
         if (token.cancelled) return;
-        STATE.setCoreId(coreParams.id);
+        state.setCoreId(coreParams.id);
     });
 
     autorun(async () => {
         const token = tokenFactory.getExclusiveToken('get pins');
-        if (!STATE.isCoreInitialized) return;
+        if (!state.isCoreInitialized) return;
         const pins = await core.getPins();
         if (token.cancelled) return;
-        STATE.setPins(pins);
-        STATE.setNumberOfPins(pins.length);
+        state.setPins(pins);
+        state.setNumberOfPins(pins.length);
     });
 
     autorun(async () => {
         const token = tokenFactory.getExclusiveToken('pattern calc');
-        if (!STATE.isCoreInitialized) return;
-        const numberOfStrings = STATE.numberOfStrings;
+        if (!state.isCoreInitialized) return;
+        const numberOfStrings = state.numberOfStrings;
         let pattern = await core.getPattern();
         if (token.cancelled) return;
         if (pattern.length >= numberOfStrings) {
-            STATE.setPattern(pattern.slice(0, numberOfStrings));
+            state.setPattern(pattern.slice(0, numberOfStrings));
             return;
         }
         while (true) {
             const requestedNrOfStrings = Math.min(pattern.length + 100, numberOfStrings);
             pattern = await core.calcPattern(requestedNrOfStrings);
             if (token.cancelled) return;
-            STATE.setPattern(pattern);
+            state.setPattern(pattern);
             if (pattern.length < requestedNrOfStrings) {
-                console.log('max numberOfStrings reached:', pattern.length);
-                STATE.setNumberOfStrings(pattern.length);
+                state.setNumberOfStrings(pattern.length);
                 break;
             }
             if (pattern.length === numberOfStrings) {
