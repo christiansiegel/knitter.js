@@ -2,6 +2,7 @@ import { autorun, computed, configure, makeAutoObservable, observable } from 'mo
 import { Dimensions, Pin, Shape } from './types';
 import { LocalStorage } from './util/local-storage';
 import { CoreParams } from './core';
+import { EXAMPLE_IMAGE_DATA_URL } from './example.png.base64';
 
 interface Parameters {
     imageDataUrl?: string;
@@ -21,6 +22,7 @@ interface State extends Parameters {
 }
 
 const defaultParams: Parameters = {
+    imageDataUrl: EXAMPLE_IMAGE_DATA_URL,
     dimensions: { width: 700, height: 700 },
     shape: 'circle',
     numberOfPins: 200,
