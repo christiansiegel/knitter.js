@@ -1,6 +1,6 @@
 import { Dimensions, Pin, Shape } from './types';
 
-export interface CoreParams {
+export interface Parameters {
     numberOfPins: number;
     shape: Shape;
     dimensions: Dimensions;
@@ -10,92 +10,80 @@ export interface CoreParams {
     [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-interface Context extends CoreParams {
-    pinParamsId: string;
-    pins: Pin[];
-    usedPinPairIds: { [pinPairId: string]: boolean };
-    pattern: number[];
-}
-
 export class Core {
-    private _ctx: Context | undefined = undefined;
-    private _lineIndicesCache: { [pinPairId: number]: number[] } = {};
+    private params?: Parameters = undefined;
+    private lineIndicesCache: { [pinPairId: number]: number[] } = {};
+    private pinParamsId?: string;
+    private pins?: Pin[];
+    private usedPinPairIds: { [pinPairId: string]: boolean } = {};
+    private pattern?: number[];
 
-    get ctx(): Context {
-        if (!this._ctx) {
-            throw new Error('Pattern context not initialized!');
-        }
-        return this._ctx;
-    }
-
-    init(params: CoreParams): void {
+    init(params: Parameters): void {
         const pinParamsId = JSON.stringify([params.numberOfPins, params.dimensions, params.shape]);
-        let pins;
-        if (this._ctx?.pinParamsId === pinParamsId) {
-            pins = this._ctx.pins;
-        } else {
-            pins = calcPins(params.numberOfPins, params.dimensions, params.shape);
-            this._lineIndicesCache = {};
+        if (this.pinParamsId !== pinParamsId) {
+            this.pins = calcPins(params.numberOfPins, params.dimensions, params.shape);
+            this.pinParamsId = pinParamsId;
+            this.lineIndicesCache = {};
         }
-        this._ctx = {
-            pinParamsId: pinParamsId,
-            pins: pins,
-            usedPinPairIds: {},
-            pattern: [0],
-            ...params,
-        };
+        this.usedPinPairIds = {};
+        this.pattern = [0];
+        this.params = params;
     }
 
     getPins(): Pin[] {
-        return this.ctx.pins;
+        if (!this.pins) throw new Error('Core not initialized');
+        return this.pins;
     }
 
     getPattern(): number[] {
-        return this.ctx.pattern;
+        if (!this.pattern) throw new Error('Core not initialized');
+        return this.pattern;
     }
 
-    calcPattern(limit: number): number[] {
-        const ctx = this.ctx;
-        for (let i = ctx.pattern.length; i < limit; ++i) {
-            const currentPin = ctx.pins[ctx.pattern[ctx.pattern.length - 1]];
+    calcPattern(patternLength: number): number[] {
+        if (!this.pattern || !this.pins || !this.params) throw new Error('Core not initialized');
+        const pins = this.pins;
+        const params = this.params;
+        for (let i = this.pattern.length; i < patternLength; ++i) {
+            const currentPin = this.pins[this.pattern[this.pattern.length - 1]];
 
             const usedPinPairsFilter = (nextPin: Pin) => {
-                return !(makePinPairId(currentPin, nextPin) in ctx.usedPinPairIds);
+                return !(makePinPairId(currentPin, nextPin) in this.usedPinPairIds);
             };
             const minDistanceFilter = (nextPin: Pin) => {
-                return circularArrayIndexDistance(currentPin.id, nextPin.id, ctx.pins.length) >= ctx.minimalDistance;
+                return circularArrayIndexDistance(currentPin.id, nextPin.id, pins.length) >= params.minimalDistance;
             };
             const lineScoreMapper = (nextPin: Pin) => {
-                const lineIndices = this.getLineIndicesCached(currentPin, nextPin, ctx.dimensions.width);
-                return calcScore(ctx.pixels, lineIndices);
+                const lineIndices = this.getLineIndicesCached(currentPin, nextPin, params.dimensions.width);
+                return calcScore(params.pixels, lineIndices);
             };
 
-            let possibleNextPins = ctx.pins.filter(usedPinPairsFilter);
+            let possibleNextPins = pins.filter(usedPinPairsFilter);
             possibleNextPins = possibleNextPins.filter(minDistanceFilter); // todo: square pattern distances
             if (possibleNextPins.length === 0) {
-                return ctx.pattern; // all pins used
+                return this.pattern; // all pins used
             }
             const possibleNextLinesScores = possibleNextPins.map(lineScoreMapper);
             const nextPin = possibleNextPins[indexOfMax(possibleNextLinesScores)];
             if (nextPin === undefined) console.log(possibleNextPins);
 
-            const lineIndices = this.getLineIndicesCached(currentPin, nextPin, ctx.dimensions.width);
-            fadePixels(ctx.pixels, lineIndices, ctx.fadeRate);
+            const lineIndices = this.getLineIndicesCached(currentPin, nextPin, params.dimensions.width);
+            fadePixels(params.pixels, lineIndices, params.fadeRate);
 
-            ctx.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
-            ctx.pattern.push(nextPin.id);
+            this.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
+            this.pattern.push(nextPin.id);
         }
 
-        return ctx.pattern.slice(0, limit);
+        return this.pattern.slice(0, patternLength);
     }
 
     private getLineIndicesCached(a: Pin, b: Pin, width: number): number[] {
         const key = makePinPairId(a, b);
-        if (key in this._lineIndicesCache) {
-            return this._lineIndicesCache[key];
+        if (key in this.lineIndicesCache) {
+            return this.lineIndicesCache[key];
         }
         const indices = getLineIndices(a, b, width);
-        this._lineIndicesCache[key] = indices;
+        this.lineIndicesCache[key] = indices;
         return indices;
     }
 }

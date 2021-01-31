@@ -1,7 +1,7 @@
 import { autorun, computed, configure, makeAutoObservable, observable } from 'mobx';
 import { Dimensions, Pin, Shape } from './types';
 import { LocalStorage } from './util/local-storage';
-import { CoreParams } from './core';
+import { Parameters as CoreParameters } from './core';
 
 interface Parameters {
     imageDataUrl: string;
@@ -59,7 +59,7 @@ class State implements Parameters {
     setPattern = (pattern: number[]) => (this.pattern = pattern);
     setCoreId = (coreId: string) => (this.coreId = coreId);
 
-    get coreParams(): CoreParams | undefined {
+    get coreParams(): CoreParameters | undefined {
         if (!this.pixels) return undefined;
         return {
             id: Date.now() + '' + Math.random(),
