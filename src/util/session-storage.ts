@@ -1,14 +1,14 @@
 /* eslint-disable  @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
-export class LocalStorage {
+export class SessionStorage {
     static saveItem(key: string, value: any): void {
-        localStorage.setItem(key, JSON.stringify({ [key]: value }));
+        sessionStorage.setItem(key, JSON.stringify({ [key]: value }));
     }
     static loadItems(keys: string[]): any {
         let obj = {};
         keys.forEach((key) => {
-            const value = localStorage.getItem(key);
+            const value = sessionStorage.getItem(key);
             obj = { ...obj, ...JSON.parse(value || '{}') };
         });
         return obj;

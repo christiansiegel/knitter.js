@@ -1,6 +1,6 @@
 import { autorun, computed, configure, makeAutoObservable, observable } from 'mobx';
 import { Dimensions, Pin, Shape } from './types';
-import { LocalStorage } from './util/local-storage';
+import { SessionStorage } from './util/session-storage';
 import { Parameters as CoreParameters } from './core';
 
 interface Parameters {
@@ -79,7 +79,7 @@ class State implements Parameters {
 export function loadState(defaultParams: Parameters): State {
     const state = new State({
         ...defaultParams,
-        ...LocalStorage.loadItems([
+        ...SessionStorage.loadItems([
             'imageDataUrl',
             'dimensions',
             'numberOfPins',
@@ -89,12 +89,12 @@ export function loadState(defaultParams: Parameters): State {
             'minimalDistance',
         ]),
     });
-    autorun(() => LocalStorage.saveItem('imageDataUrl', state.imageDataUrl));
-    autorun(() => LocalStorage.saveItem('dimensions', state.dimensions));
-    autorun(() => LocalStorage.saveItem('shape', state.shape));
-    autorun(() => LocalStorage.saveItem('numberOfPins', state.numberOfPins));
-    autorun(() => LocalStorage.saveItem('numberOfStrings', state.numberOfStrings));
-    autorun(() => LocalStorage.saveItem('fadeRate', state.fadeRate));
-    autorun(() => LocalStorage.saveItem('minimalDistance', state.minimalDistance));
+    autorun(() => SessionStorage.saveItem('imageDataUrl', state.imageDataUrl));
+    autorun(() => SessionStorage.saveItem('dimensions', state.dimensions));
+    autorun(() => SessionStorage.saveItem('shape', state.shape));
+    autorun(() => SessionStorage.saveItem('numberOfPins', state.numberOfPins));
+    autorun(() => SessionStorage.saveItem('numberOfStrings', state.numberOfStrings));
+    autorun(() => SessionStorage.saveItem('fadeRate', state.fadeRate));
+    autorun(() => SessionStorage.saveItem('minimalDistance', state.minimalDistance));
     return state;
 }
