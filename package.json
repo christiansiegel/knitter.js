@@ -9,7 +9,7 @@
     "start": "parcel src/index.html",
     "prebuild": "rimraf dist",
     "build": "parcel build src/index.html",
-    "build-prod": "npm run build -- --no-source-maps"
+    "build-prod": "npm run build -- --no-source-maps --public-url ./"
   },
   "browserslist": [
     "since 2017-06"
