@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "lint": "eslint 'src/**/*.ts'",
     "lint-fix": "npm run lint -- --fix",
     "start": "parcel src/index.html",
@@ -34,5 +35,8 @@
     "bulma-slider": "2.0.4",
     "comlink": "4.3.0",
     "mobx": "6.0.4"
+  },
+  "resolutions": {
+    "node-forge": "0.10.0"
   }
 }
