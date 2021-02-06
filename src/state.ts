@@ -66,8 +66,12 @@ class State implements Parameters {
     setParameters = (params: Parameters) => Object.assign(this, params);
 
     get parameters(): Parameters {
-        return <Parameters>(
-            this.parameterKeys.reduce((acc: Partial<Parameters>, k: keyof Parameters) => ({ ...acc, [k]: this[k] }), {})
+        return <Parameters>this.parameterKeys.reduce(
+            (acc: Partial<Parameters>, k: keyof Parameters) => ({
+                ...acc,
+                [k]: this[k],
+            }),
+            {},
         );
     }
 

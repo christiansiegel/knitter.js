@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint \"{*.js,src/**/*.ts}\"",
     "lint-fix": "npm run lint -- --fix",
     "pretest": "rimraf coverage", 
     "test": "jest",

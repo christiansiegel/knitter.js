@@ -42,7 +42,9 @@ export async function readKnitterFile(file: File): Promise<Parameters> {
 export function downloadKnitterFile(parameters: Parameters, filename: string): void {
     const data = JSON.stringify(parameters);
     const checksum = hashCode(data);
-    const blob = new Blob([`${checksum}|${data}`], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([`${checksum}|${data}`], {
+        type: 'text/plain;charset=utf-8',
+    });
     saveAs(blob, filename);
 }
 
