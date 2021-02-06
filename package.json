@@ -34,6 +34,7 @@
     "@fortawesome/fontawesome-free": "5.15.2",
     "bulma": "0.9.1",
     "bulma-slider": "2.0.4",
+    "bulma-toast": "2.2.0",
     "comlink": "4.3.0",
     "file-saver": "2.0.5",
     "mobx": "6.0.4"

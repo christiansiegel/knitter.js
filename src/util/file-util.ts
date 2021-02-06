@@ -19,11 +19,24 @@ export async function readFileAsText(file: File): Promise<string> {
     });
 }
 
-export async function readKnitterFile(file: File): Promise<Parameters | null> {
-    const text = await readFileAsText(file);
-    const [checksum, data] = text.split('|', 2);
-    const isValid = hashCode(data).toString() == checksum;
-    return isValid ? <Parameters>JSON.parse(data) : null;
+export async function readKnitterFile(file: File): Promise<Parameters> {
+    let text: string;
+    try {
+        text = await readFileAsText(file);
+    } catch (e) {
+        console.error(e);
+        throw Error('Oops. Could not read the file!');
+    }
+    try {
+        const [checksum, data] = text.split('|', 2);
+        if (hashCode(data).toString() !== checksum) {
+            throw Error('checksum mismatch');
+        }
+        return <Parameters>JSON.parse(data);
+    } catch (e) {
+        console.error(e);
+        throw Error('Invalid file!');
+    }
 }
 
 export function downloadKnitterFile(parameters: Parameters, filename: string): void {

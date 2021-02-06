@@ -1,3 +1,4 @@
+import { toast } from 'bulma-toast';
 import { Pin, Shape } from './types';
 import { RandomNumberGenerator } from './util/random-number-generator';
 
@@ -159,6 +160,18 @@ export class UserInterface {
             this.inputImage.classList.remove('is-circle');
             this.distanceParamSlider.hide();
         }
+    }
+
+    showError(message: string): void {
+        toast({
+            message: message,
+            type: 'is-danger',
+            position: 'top-center',
+            duration: 3000,
+            pauseOnHover: true,
+            dismissible: true,
+            closeOnClick: true,
+        });
     }
 
     private renderCanvas(): void {

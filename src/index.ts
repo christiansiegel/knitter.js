@@ -27,14 +27,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     ui.onKnitterFileOpened = async (file: File) => {
         try {
             const parameters = await readKnitterFile(file);
-            if (!parameters) {
-                alert('Oops. Invalid file!');
-                return;
-            }
             state.setParameters(parameters);
         } catch (e) {
-            console.error(e);
-            alert('Oops. Could not read file!');
+            ui.showError(e.message);
         }
     };
     ui.onSaveClicked = () => {
