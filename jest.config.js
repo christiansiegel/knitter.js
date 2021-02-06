@@ -6,5 +6,5 @@ module.exports = {
     testRegex: '^.+\\.spec\\.ts$',
     moduleFileExtensions: ['ts', 'js'],
     collectCoverageFrom: ['src/**/*.ts'],
-    coverageReporters: ['json', 'html'],
+    coverageReporters: ['text', 'html'],
 };
