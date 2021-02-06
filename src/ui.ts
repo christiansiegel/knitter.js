@@ -221,7 +221,10 @@ export class UserInterface {
 
 function createFileInputEventHandler(fileHandler: (file: File) => void): (event: Event) => void {
     return (event: Event) => {
-        const files = (<HTMLInputElement>event.target).files;
+        const inputElement = <HTMLInputElement>event.target;
+        const files = inputElement.files;
+        inputElement.type = ''; // reset input element
+        inputElement.type = 'file';
         if (files && files.length > 0) fileHandler(files[0]);
     };
 }
