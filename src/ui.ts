@@ -37,8 +37,6 @@ class Slider {
 export class UserInterface {
     private circleShapeButton: HTMLButtonElement;
     private squareShapeButton: HTMLButtonElement;
-    private imageUploadButton: HTMLButtonElement;
-    private imageUploadInput: HTMLInputElement;
     private inputImage: HTMLImageElement;
     private outputCanvas: HTMLCanvasElement;
 
@@ -50,7 +48,10 @@ export class UserInterface {
     private pins: Pin[] = [];
     private pattern: number[] = [];
 
-    onInputImageSelected: ((dataUrl: string) => void) | null = null;
+    onImageFileOpened: ((file: File) => void) | null = null;
+    onKnitterFileOpened: ((file: File) => void) | null = null;
+    onSaveClicked: (() => void) | null = null;
+    onExportClicked: (() => void) | null = null;
     onPinsParamChange: ((value: number) => void) | null = null;
     onStringsParamChange: ((value: number) => void) | null = null;
     onFadeParamChange: ((value: number) => void) | null = null;
@@ -58,8 +59,28 @@ export class UserInterface {
     onShapeSelected: ((value: Shape) => void) | null = null;
 
     constructor() {
-        this.imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
-        this.imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
+        const openInput = <HTMLInputElement>document.getElementById('open-input');
+        openInput.onchange = createFileInputEventHandler((file) => {
+            this.onKnitterFileOpened && this.onKnitterFileOpened(file);
+        });
+
+        const openButton = <HTMLButtonElement>document.getElementById('open-button');
+        openButton.onclick = () => openInput.click();
+
+        const saveButton = <HTMLButtonElement>document.getElementById('save-button');
+        saveButton.onclick = () => this.onSaveClicked && this.onSaveClicked();
+
+        const exportButton = <HTMLButtonElement>document.getElementById('export-button');
+        exportButton.onclick = () => this.onExportClicked && this.onExportClicked();
+
+        const imageUploadInput = <HTMLInputElement>document.getElementById('image-upload-input');
+        imageUploadInput.onchange = createFileInputEventHandler((file) => {
+            this.onImageFileOpened && this.onImageFileOpened(file);
+        });
+
+        const imageUploadButton = <HTMLButtonElement>document.getElementById('image-upload-button');
+        imageUploadButton.onclick = () => imageUploadInput.click();
+
         this.inputImage = <HTMLImageElement>document.getElementById('input-image');
         this.outputCanvas = <HTMLCanvasElement>document.getElementById('output-canvas');
 
@@ -93,16 +114,6 @@ export class UserInterface {
         this.distanceParamSlider.onchange = (value: number) => {
             this.onDistanceParamChange && this.onDistanceParamChange(value);
         };
-
-        this.imageUploadButton.onclick = () => this.imageUploadInput.click();
-
-        this.imageUploadInput.onchange = async (e) => {
-            const files = (<HTMLInputElement>e.target).files;
-            if (files && files.length > 0) {
-                const dataUrl = await readFileAsDataURL(files[0]);
-                this.onInputImageSelected && this.onInputImageSelected(dataUrl);
-            }
-        };
     }
 
     setInputImageSrc(src: string): void {
@@ -134,6 +145,20 @@ export class UserInterface {
     setPattern(pattern: number[]): void {
         this.pattern = pattern;
         this.renderCanvas();
+    }
+
+    setShape(shape: Shape): void {
+        if (shape === 'circle') {
+            this.circleShapeButton.classList.add('is-info', 'is-selected');
+            this.squareShapeButton.classList.remove('is-info', 'is-selected');
+            this.inputImage.classList.add('is-circle');
+            this.distanceParamSlider.show();
+        } else {
+            this.squareShapeButton.classList.add('is-info', 'is-selected');
+            this.circleShapeButton.classList.remove('is-info', 'is-selected');
+            this.inputImage.classList.remove('is-circle');
+            this.distanceParamSlider.hide();
+        }
     }
 
     private renderCanvas(): void {
@@ -179,27 +204,11 @@ export class UserInterface {
         });
         ctx.stroke();
     }
-
-    setShape(shape: Shape): void {
-        if (shape === 'circle') {
-            this.circleShapeButton.classList.add('is-info', 'is-selected');
-            this.squareShapeButton.classList.remove('is-info', 'is-selected');
-            this.inputImage.classList.add('is-circle');
-            this.distanceParamSlider.show();
-        } else {
-            this.squareShapeButton.classList.add('is-info', 'is-selected');
-            this.circleShapeButton.classList.remove('is-info', 'is-selected');
-            this.inputImage.classList.remove('is-circle');
-            this.distanceParamSlider.hide();
-        }
-    }
 }
 
-async function readFileAsDataURL(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(<string>reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
+function createFileInputEventHandler(fileHandler: (file: File) => void): (event: Event) => void {
+    return (event: Event) => {
+        const files = (<HTMLInputElement>event.target).files;
+        if (files && files.length > 0) fileHandler(files[0]);
+    };
 }

@@ -4,6 +4,7 @@ import { Core } from './core';
 import { UserInterface } from './ui';
 import { convertImageDataUrlToGrayPixels } from './util/image-converter';
 import { loadState } from './state';
+import { downloadKnitterFile, readFileAsDataURL, readKnitterFile } from './util/file-util';
 import { TokenFactory } from './util/token-factory';
 import { EXAMPLE_IMAGE_DATA_URL } from './example.png.base64';
 
@@ -23,7 +24,29 @@ const WorkerCore = wrap<typeof Core>(worker);
 document.addEventListener('DOMContentLoaded', async () => {
     const ui = new UserInterface();
 
-    ui.onInputImageSelected = state.setImageDataUrl;
+    ui.onKnitterFileOpened = async (file: File) => {
+        try {
+            const parameters = await readKnitterFile(file);
+            if (!parameters) {
+                alert('Oops. Invalid file!');
+                return;
+            }
+            state.setParameters(parameters);
+        } catch (e) {
+            console.error(e);
+            alert('Oops. Could not read file!');
+        }
+    };
+    ui.onSaveClicked = () => {
+        downloadKnitterFile(state.parameters, 'project.knitter');
+    };
+    ui.onExportClicked = () => {
+        alert('Export feature coming soon!');
+    };
+    ui.onImageFileOpened = async (file: File) => {
+        const dataUrl = await readFileAsDataURL(file);
+        state.setImageDataUrl(dataUrl);
+    };
     ui.onFadeParamChange = state.setFadeRate;
     ui.onPinsParamChange = state.setNumberOfPins;
     ui.onStringsParamChange = state.setNumberOfStrings;

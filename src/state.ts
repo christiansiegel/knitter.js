@@ -3,7 +3,7 @@ import { Dimensions, Pin, Shape } from './types';
 import { SessionStorage } from './util/session-storage';
 import { Parameters as CoreParameters } from './core';
 
-interface Parameters {
+export interface Parameters {
     imageDataUrl: string;
     dimensions: Dimensions;
     shape: Shape;
@@ -17,6 +17,9 @@ configure({
     enforceActions: 'observed',
 });
 class State implements Parameters {
+    private coreId = '';
+    private parameterKeys: (keyof Parameters)[];
+
     imageDataUrl: string;
     dimensions: Dimensions;
     shape: Shape;
@@ -24,13 +27,13 @@ class State implements Parameters {
     numberOfStrings: number;
     fadeRate: number;
     minimalDistance: number;
+
     pins?: Pin[] = undefined;
     pixels?: Uint8ClampedArray = undefined;
     pattern?: number[] = undefined;
 
-    private coreId = '';
-
     constructor(init: Parameters) {
+        this.parameterKeys = <(keyof Parameters)[]>Object.keys(init);
         this.imageDataUrl = init.imageDataUrl;
         this.shape = init.shape;
         this.dimensions = init.dimensions;
@@ -38,10 +41,12 @@ class State implements Parameters {
         this.numberOfStrings = init.numberOfStrings;
         this.fadeRate = init.fadeRate;
         this.minimalDistance = init.minimalDistance;
-        makeAutoObservable(this, {
+        makeAutoObservable<State, 'parameterKeys'>(this, {
+            parameterKeys: false,
             pins: observable.ref,
             pixels: observable.ref,
             pattern: observable.ref,
+            parameters: false,
             coreParams: computed,
             isCoreInitialized: computed,
         });
@@ -58,6 +63,13 @@ class State implements Parameters {
     setPixels = (pixels: Uint8ClampedArray) => (this.pixels = pixels);
     setPattern = (pattern: number[]) => (this.pattern = pattern);
     setCoreId = (coreId: string) => (this.coreId = coreId);
+    setParameters = (params: Parameters) => Object.assign(this, params);
+
+    get parameters(): Parameters {
+        return <Parameters>(
+            this.parameterKeys.reduce((acc: Partial<Parameters>, k: keyof Parameters) => ({ ...acc, [k]: this[k] }), {})
+        );
+    }
 
     get coreParams(): CoreParameters | undefined {
         if (!this.pixels) return undefined;
@@ -76,25 +88,15 @@ class State implements Parameters {
         return this.coreId === this.coreParams?.id;
     }
 }
+
 export function loadState(defaultParams: Parameters): State {
+    const keys = <(keyof Parameters)[]>Object.keys(defaultParams);
     const state = new State({
         ...defaultParams,
-        ...SessionStorage.loadItems([
-            'imageDataUrl',
-            'dimensions',
-            'numberOfPins',
-            'numberOfStrings',
-            'shape',
-            'fadeRate',
-            'minimalDistance',
-        ]),
+        ...SessionStorage.loadItems(keys),
     });
-    autorun(() => SessionStorage.saveItem('imageDataUrl', state.imageDataUrl));
-    autorun(() => SessionStorage.saveItem('dimensions', state.dimensions));
-    autorun(() => SessionStorage.saveItem('shape', state.shape));
-    autorun(() => SessionStorage.saveItem('numberOfPins', state.numberOfPins));
-    autorun(() => SessionStorage.saveItem('numberOfStrings', state.numberOfStrings));
-    autorun(() => SessionStorage.saveItem('fadeRate', state.fadeRate));
-    autorun(() => SessionStorage.saveItem('minimalDistance', state.minimalDistance));
+    keys.forEach((k) => {
+        autorun(() => SessionStorage.saveItem(k, state[k]));
+    });
     return state;
 }

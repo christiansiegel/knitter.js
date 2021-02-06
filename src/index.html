@@ -13,12 +13,39 @@
     <section class="hero">
       <div class="hero-body">
         <div class="container">
-          <h1 class="title">
-            knitter.js
-          </h1>
-          <h2 class="subtitle">
-            Drawing with straight lines
-          </h2>
+          <div class="columns">
+            <div class="column is-one-third">
+              <h1 class="title">
+                knitter.js
+              </h1>
+              <h2 class="subtitle">
+                Drawing with straight lines
+              </h2>
+            </div>
+            <div class="column">
+              <div class="buttons has-addons is-right">
+                <input id="open-input" type="file" accept=".knitter" hidden />
+                <button id="open-button" class="button">
+                  <span class="icon is-small">
+                    <i class="fas fa-folder-open"></i>
+                  </span>
+                  <span>Open</span>
+                </button>
+                <button id="save-button" class="button">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save</span>
+                </button>
+                <button id="export-button" class="button">
+                  <span class="icon is-small">
+                    <i class="fas fa-file-export"></i>
+                  </span>
+                  <span>Export</span>
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="columns">
             <div class="column is-one-third">
               <div class="card">
