@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const parameters = await readKnitterFile(file);
             state.setParameters(parameters);
+            ui.showSuccess(`Opened '${file.name}'!`);
         } catch (e) {
             ui.showError(e.message);
         }

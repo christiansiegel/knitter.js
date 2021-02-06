@@ -162,14 +162,24 @@ export class UserInterface {
         }
     }
 
+    showSuccess(message: string): void {
+        toast({
+            message: message,
+            type: 'is-success',
+            position: 'top-center',
+            duration: 2000,
+            pauseOnHover: false,
+            closeOnClick: true,
+        });
+    }
+
     showError(message: string): void {
         toast({
             message: message,
             type: 'is-danger',
             position: 'top-center',
-            duration: 3000,
+            duration: 2000,
             pauseOnHover: true,
-            dismissible: true,
             closeOnClick: true,
         });
     }

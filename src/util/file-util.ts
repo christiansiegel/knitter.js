@@ -25,7 +25,7 @@ export async function readKnitterFile(file: File): Promise<Parameters> {
         text = await readFileAsText(file);
     } catch (e) {
         console.error(e);
-        throw Error('Oops. Could not read the file!');
+        throw Error(`Oops. Could not read '${file.name}'!`);
     }
     try {
         const [checksum, data] = text.split('|', 2);
@@ -35,7 +35,7 @@ export async function readKnitterFile(file: File): Promise<Parameters> {
         return <Parameters>JSON.parse(data);
     } catch (e) {
         console.error(e);
-        throw Error('Invalid file!');
+        throw Error(`Invalid file: '${file.name}'`);
     }
 }
 
