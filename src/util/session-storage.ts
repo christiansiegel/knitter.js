@@ -2,7 +2,7 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
 export class SessionStorage {
-    static saveItem(key: string, value: any): void {
+    static saveItem(key: string, value: number | string): void {
         sessionStorage.setItem(key, JSON.stringify({ [key]: value }));
     }
     static loadItems(keys: string[]): any {
