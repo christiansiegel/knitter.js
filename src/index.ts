@@ -2,7 +2,7 @@ import { autorun } from 'mobx';
 import { wrap } from 'comlink';
 import { Core } from './core';
 import { UserInterface } from './ui';
-import { convertImageDataUrlToGrayPixels } from './util/image-converter';
+import { convertImageDataUrlToGrayPixels, isValidImageDataUrl } from './util/image-converter';
 import { loadState } from './state';
 import { downloadKnitterFile, readFileAsDataURL, readKnitterFile } from './util/file-util';
 import { TokenFactory } from './util/token-factory';
@@ -33,15 +33,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             ui.showError(e.message);
         }
     };
-    ui.onSaveClicked = () => {
-        downloadKnitterFile(state.parameters, 'project.knitter');
+    ui.onSaveClicked = async () => {
+        await downloadKnitterFile(state.parameters, 'project.knitter');
     };
     ui.onExportClicked = () => {
         alert('Export feature coming soon!');
     };
     ui.onImageFileOpened = async (file: File) => {
         const dataUrl = await readFileAsDataURL(file);
-        state.setImageDataUrl(dataUrl);
+        if (await isValidImageDataUrl(dataUrl)) {
+            state.setImageDataUrl(dataUrl);
+        } else {
+            ui.showError(`Oops. Cannot load '${file.name}'!`);
+        }
     };
     ui.onFadeParamChange = state.setFadeRate;
     ui.onPinsParamChange = state.setNumberOfPins;

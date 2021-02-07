@@ -1,4 +1,4 @@
-import { convertImageDataUrlToGrayPixels } from './image-converter';
+import { convertImageDataUrlToGrayPixels, isValidImageDataUrl } from './image-converter';
 
 const EXAMPLE_SVG = `
 <svg width="100" height="100">
@@ -33,6 +33,23 @@ describe('convertImageDataUrlToGrayPixels()', () => {
         } catch (e) {
             expect(e.message).toBe('image load error');
         }
+        console.error = consoleError;
+    });
+});
+
+describe('isValidImageDataUrl()', () => {
+    it('should return true for valid data URL', async () => {
+        expect.assertions(1);
+        const dataUrl = `data:image/svg+xml;utf8,${EXAMPLE_SVG}`;
+        expect(await isValidImageDataUrl(dataUrl)).toBe(true);
+    });
+
+    it('should return false for invalid data URL', async () => {
+        expect.assertions(1);
+        const consoleError = console.error;
+        console.error = jest.fn(); // disable element's error log during test
+        const invalidDataUrl = `data:image/svg+xml;utf8,${EXAMPLE_SVG}>>>>>>>>>>>`;
+        expect(await isValidImageDataUrl(invalidDataUrl)).toBe(false);
         console.error = consoleError;
     });
 });
