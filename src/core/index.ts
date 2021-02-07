@@ -8,6 +8,7 @@ import {
     lightenUp,
     makePinPairId,
 } from './algorithms';
+import { cachify } from './cachify';
 
 export interface Parameters {
     numberOfPins: number;
@@ -21,7 +22,6 @@ export interface Parameters {
 
 export class Core {
     private params?: Parameters = undefined;
-    private lineIndicesCache: { [pinPairId: number]: number[] } = {};
     private pinParamsId?: string;
     private pins?: Pin[];
     private usedPinPairIds: { [pinPairId: string]: boolean } = {};
@@ -32,7 +32,7 @@ export class Core {
         if (this.pinParamsId !== pinParamsId) {
             this.pins = calcPins(params.numberOfPins, params.dimensions, params.shape);
             this.pinParamsId = pinParamsId;
-            this.lineIndicesCache = {};
+            this.getLineIndicesCached = cachify(getLineIndices, makePinPairId); // resets cache
         }
         this.usedPinPairIds = {};
         this.pattern = [0];
@@ -86,13 +86,5 @@ export class Core {
         return this.pattern.slice(0, patternLength);
     }
 
-    private getLineIndicesCached(a: Pin, b: Pin, width: number): number[] {
-        const key = makePinPairId(a, b);
-        if (key in this.lineIndicesCache) {
-            return this.lineIndicesCache[key];
-        }
-        const indices = getLineIndices(a, b, width);
-        this.lineIndicesCache[key] = indices;
-        return indices;
-    }
+    private getLineIndicesCached = cachify(getLineIndices, makePinPairId);
 }
