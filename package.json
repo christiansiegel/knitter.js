@@ -1,8 +1,8 @@
 {
   "name": "knitter.js",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Drawing with straight lines",
+  "main": "src/index.js",
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
     "lint": "eslint \"{*.js,src/**/*.ts}\"",
@@ -10,6 +10,7 @@
     "pretest": "rimraf coverage",
     "test": "jest",
     "test-coverage": "jest --coverage",
+    "test-watch": "jest --watch",
     "start": "parcel src/index.html",
     "prebuild": "rimraf dist",
     "build": "parcel build src/index.html",
@@ -20,6 +21,10 @@
   ],
   "author": "Christian Siegel",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/christiansiegel/knitter.js/issues"
+  },
+  "homepage": "https://christiansiegel.github.io/knitter.js/",
   "devDependencies": {
     "@types/file-saver": "2.0.1",
     "@typescript-eslint/eslint-plugin": "4.13.0",
