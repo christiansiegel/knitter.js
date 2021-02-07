@@ -1,9 +1,5 @@
 import { Dimensions, Pin, Shape } from '../types';
 
-export function calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
-    return (shape === 'circle' ? calcCirclePins : calcSquarePins)(numberOfPins, dimensions);
-}
-
 export function indexOfMax(arr: number[]): number {
     let max = -Infinity;
     let maxIndex = -1;
@@ -20,9 +16,8 @@ export function calcScore(pixels: Uint8ClampedArray, indices: number[]): number 
     return 0xff - indices.reduce((sum, idx) => sum + pixels[idx], 0) / indices.length;
 }
 
-export function fadePixels(pixels: Uint8ClampedArray, indices: number[], fadeRate: number): void {
-    const fade = Math.round((0xff * fadeRate) / 100);
-    indices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + fade)));
+export function lightenUp(pixels: Uint8ClampedArray, indices: number[], value: number): void {
+    indices.forEach((idx) => (pixels[idx] = Math.min(0xff, pixels[idx] + value)));
 }
 
 export function circularArrayIndexDistance(idx1: number, idx2: number, length: number): number {
@@ -35,6 +30,9 @@ export function makePinPairId(a: Pin, b: Pin): number {
 }
 
 export function getLineIndices(a: Pin, b: Pin, width: number): number[] {
+    if (a.y > b.y || (a.y === b.y && a.x > b.x)) {
+        [a, b] = [b, a];
+    }
     const dx = Math.abs(b.x - a.x),
         dy = -Math.abs(b.y - a.y),
         sx = a.x < b.x ? 1 : -1,
@@ -59,11 +57,15 @@ export function getLineIndices(a: Pin, b: Pin, width: number): number[] {
     return indices;
 }
 
-export function calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
+export function calcPins(numberOfPins: number, dimensions: Dimensions, shape: Shape): Pin[] {
+    return (shape === 'circle' ? calcCirclePins : calcSquarePins)(numberOfPins, dimensions);
+}
+
+function calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
     const diameter = Math.min(dimensions.width, dimensions.height);
-    const xOffset = (dimensions.width - diameter) / 2;
-    const yOffset = (dimensions.height - diameter) / 2;
-    const radius = diameter / 2.0 - 1; // TODO: otherwise there will be a pin with x/y = width/height?
+    const xOffset = Math.round((dimensions.width - diameter) / 2);
+    const yOffset = Math.round((dimensions.height - diameter) / 2);
+    const radius = Math.floor((diameter - 1) / 2);
     const angle = (Math.PI * 2.0) / numberOfPins;
     const pins = [];
     for (let i = 0; i < numberOfPins; i++) {
@@ -76,12 +78,12 @@ export function calcCirclePins(numberOfPins: number, dimensions: Dimensions): Pi
     return pins;
 }
 
-export function calcSquarePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
-    const size = Math.min(dimensions.width, dimensions.height) - 2; // TODO: otherwise there will be a pin with x/y = width/height?
-    const xOffset = (dimensions.width - size) / 2;
-    const yOffset = (dimensions.height - size) / 2;
+function calcSquarePins(numberOfPins: number, dimensions: Dimensions): Pin[] {
+    const size = Math.min(dimensions.width, dimensions.height);
+    const xOffset = Math.round((dimensions.width - size) / 2);
+    const yOffset = Math.round((dimensions.height - size) / 2);
     const pinsPerSide = Math.floor(numberOfPins / 4);
-    const pinDistance = size / pinsPerSide;
+    const pinDistance = (size - 1) / pinsPerSide;
     const pins = [];
     for (let i = 0; i < pinsPerSide; i++) {
         pins.push({
@@ -93,22 +95,22 @@ export function calcSquarePins(numberOfPins: number, dimensions: Dimensions): Pi
     for (let i = 0; i < pinsPerSide; i++) {
         pins.push({
             id: pins.length,
-            x: xOffset + size,
+            x: xOffset + size - 1,
             y: yOffset + Math.round(pinDistance * i),
         });
     }
     for (let i = 0; i < pinsPerSide; i++) {
         pins.push({
             id: pins.length,
-            x: xOffset + size - Math.round(pinDistance * i),
-            y: yOffset + size,
+            x: xOffset + size - 1 - Math.round(pinDistance * i),
+            y: yOffset + size - 1,
         });
     }
     for (let i = 0; i < pinsPerSide; i++) {
         pins.push({
             id: pins.length,
             x: xOffset,
-            y: yOffset + size - Math.round(pinDistance * i),
+            y: yOffset + size - 1 - Math.round(pinDistance * i),
         });
     }
     return pins;

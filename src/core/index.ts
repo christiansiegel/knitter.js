@@ -3,9 +3,9 @@ import {
     calcPins,
     calcScore,
     circularArrayIndexDistance,
-    fadePixels,
     getLineIndices,
     indexOfMax,
+    lightenUp,
     makePinPairId,
 } from './algorithms';
 
@@ -77,7 +77,7 @@ export class Core {
             if (nextPin === undefined) console.log(possibleNextPins);
 
             const lineIndices = this.getLineIndicesCached(currentPin, nextPin, params.dimensions.width);
-            fadePixels(params.pixels, lineIndices, params.fadeRate);
+            lightenUp(params.pixels, lineIndices, Math.round((0xff * params.fadeRate) / 100));
 
             this.usedPinPairIds[makePinPairId(currentPin, nextPin)] = true;
             this.pattern.push(nextPin.id);
