@@ -4,18 +4,18 @@ export async function convertImageDataUrlToGrayPixels(
     dataUrl: string,
     dimensions: Dimensions,
 ): Promise<Uint8ClampedArray> {
-    const image = await createImageFromDataUrl(dataUrl);
-    image.width = dimensions.width;
-    image.height = dimensions.height;
+    const image = await createImageFromDataUrl(dataUrl, dimensions);
     const imageData = getImageData(image);
     return convertImageDataToGrayscaleArray(imageData);
 }
 
-async function createImageFromDataUrl(url: string): Promise<HTMLImageElement> {
+async function createImageFromDataUrl(url: string, dimensions: Dimensions): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => resolve(image);
-        image.onerror = reject;
+        image.onerror = () => reject(new Error('image load error'));
+        image.width = dimensions.width;
+        image.height = dimensions.height;
         image.src = url;
     });
 }
