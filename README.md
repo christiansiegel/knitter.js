@@ -1,3 +1,5 @@
+![build-and-deploy](https://github.com/christiansiegel/knitter.js/actions/workflows/build-and-deploy.yml/badge.svg)
+
 # knitter.js
 
 Web version and successor to https://github.com/christiansiegel/knitter.
