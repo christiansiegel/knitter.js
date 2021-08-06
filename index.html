@@ -1,1 +1,132 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><title>knitter.js</title><link rel="stylesheet" href="styles.625c6d26.css" type="text/css"><link rel="icon" href="favicon.418ab37a.ico" type="image/x-icon"><link rel="icon shortcut" href="favicon.418ab37a.ico" type="image/x-icon"></head><body> <section class="hero"> <div class="hero-body"> <div class="container"> <div class="columns"> <div class="column is-one-third"> <h1 class="title"> knitter.js </h1> <h2 class="subtitle"> Drawing with straight lines </h2> </div> <div class="column"> <div class="buttons has-addons is-right"> <input id="open-input" type="file" accept=".knitter" hidden> <button id="open-button" class="button"> <span class="icon is-small"> <i class="fa-folder-open fas"></i> </span> <span>Open</span> </button> <button id="save-button" class="button"> <span class="icon is-small"> <i class="fa-save fas"></i> </span> <span>Save</span> </button> <button id="export-button" class="button" style="display:none;"> <span class="icon is-small"> <i class="fa-file-export fas"></i> </span> <span>Export</span> </button> </div> </div> </div> <div class="columns"> <div class="column is-one-third"> <div class="card"> <div class="card-content"> <figure class="image is-square"> <img id="input-image" class="is-circle is-grayscale"> </figure> </div> <footer class="card-footer"> <div class="card-footer-item"> <div class="buttons has-addons"> <button id="circle-shape-button" class="button is-info is-selected"> <span class="icon is-small"> <i class="fa-circle far"></i> </span> </button> <button id="square-shape-button" class="button"> <span class="icon is-small"> <i class="fa-square far"></i> </span> </button> </div> </div> <div class="card-footer-item"> <input id="image-upload-input" type="file" accept="image/*" hidden> <button id="image-upload-button" class="button"> <span class="icon is-small"> <i class="fa-file-image far"></i> </span> <span>Open Image</span> </button> </div> </footer> </div> <div class="card mt-5"> <div class="card-content"> <div id="pins-param-slider" class="field"> <label class="label">Pins: <output for="pins-param-input">200</output></label> <div class="control"> <input id="pins-param-input" class="is-fullwidth is-info slider" step="1" min="50" max="500" value="200" type="range"> </div> </div> <div id="strings-param-slider" class="field"> <label class="label">Strings: <output for="strings-param-input">3000</output></label> <div class="control"> <input id="strings-param-input" class="is-fullwidth is-info slider" step="1" min="1" max="10000" value="3000" type="range"> </div> </div> <div id="fade-param-slider" class="field"> <label class="label">Fade: <output for="fade-param-input">50</output>%</label> <div class="control"> <input id="fade-param-input" class="is-fullwidth is-info slider" step="1" min="0" max="100" value="50" type="range"> </div> </div> <div id="distance-param-slider" class="field"> <label class="label">Distance: &gt;<output for="distance-param-input">10</output> pins</label> <div class="control"> <input id="distance-param-input" class="is-fullwidth is-info slider" step="1" min="0" max="100" value="10" type="range"> </div> </div> </div> </div> </div> <div class="column"> <div class="card"> <div class="card-content"> <div class="output-canvas-container"> <canvas id="output-canvas"></canvas> </div> </div> </div> </div> </div> </div> </div> </section> <footer class="footer has-text-centered"> <p><strong>knitter.js</strong> by <a href="https://christiansiegel.dev">Christian Siegel</a></p> <p>Licensed <a href="https://opensource.org/licenses/mit-license.php">MIT</a></p> </footer> <script src="src.197c3965.js"></script> <script async defer data-href="https://github.com/christiansiegel/knitter.js" src="https://unpkg.com/github-corners/dist/embed.min.js"></script> </body></html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>knitter.js</title>
+    <link rel="stylesheet" href="index.e073aedb.css" type="text/css">
+    <link rel="icon" href="favicon.3b51290f.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.3b51290f.ico" type="image/x-icon">
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container">
+          <div class="columns">
+            <div class="column is-one-third">
+              <h1 class="title">
+                knitter.js
+              </h1>
+              <h2 class="subtitle">
+                Drawing with straight lines
+              </h2>
+            </div>
+            <div class="column">
+              <div class="buttons has-addons is-right">
+                <input id="open-input" type="file" accept=".knitter" hidden="">
+                <button id="open-button" class="button">
+                  <span class="icon is-small">
+                    <i class="fas fa-folder-open"></i>
+                  </span>
+                  <span>Open</span>
+                </button>
+                <button id="save-button" class="button">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save</span>
+                </button>
+                <button id="export-button" class="button" style="display: none;"><!-- not implemented yet -->
+                  <span class="icon is-small">
+                    <i class="fas fa-file-export"></i>
+                  </span>
+                  <span>Export</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column is-one-third">
+              <div class="card">
+                <div class="card-content">
+                  <figure class="image is-square">
+                    <img id="input-image" class="is-grayscale is-circle">
+                  </figure>
+                </div>
+                <footer class="card-footer">
+                  <div class="card-footer-item">
+                    <div class="buttons has-addons">
+                      <button id="circle-shape-button" class="button is-info is-selected">
+                        <span class="icon is-small">
+                          <i class="far fa-circle"></i>
+                        </span>
+                      </button>
+                      <button id="square-shape-button" class="button">
+                        <span class="icon is-small">
+                          <i class="far fa-square"></i>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-footer-item">
+                    <input id="image-upload-input" type="file" accept="image/*" hidden="">
+                    <button id="image-upload-button" class="button">
+                      <span class="icon is-small">
+                        <i class="far fa-file-image"></i>
+                      </span>
+                      <span>Open Image</span>
+                    </button>
+                  </div>
+                </footer>
+              </div>
+              <div class="card mt-5">
+                <div class="card-content">
+                  <div id="pins-param-slider" class="field">
+                    <label class="label">Pins: <output for="pins-param-input">200</output></label>
+                    <div class="control">
+                      <input id="pins-param-input" class="slider is-fullwidth is-info" step="1" min="50" max="500" value="200" type="range">
+                    </div>
+                  </div>
+                  <div id="strings-param-slider" class="field">
+                    <label class="label">Strings: <output for="strings-param-input">3000</output></label>
+                    <div class="control">
+                      <input id="strings-param-input" class="slider is-fullwidth is-info" step="1" min="1" max="10000" value="3000" type="range">
+                    </div>
+                  </div>
+                  <div id="fade-param-slider" class="field">
+                    <label class="label">Fade: <output for="fade-param-input">50</output>%</label>
+                    <div class="control">
+                      <input id="fade-param-input" class="slider is-fullwidth is-info" step="1" min="0" max="100" value="50" type="range">
+                    </div>
+                  </div>
+                  <div id="distance-param-slider" class="field">
+                    <label class="label">Distance: &gt;<output for="distance-param-input">10</output> pins</label>
+                    <div class="control">
+                      <input id="distance-param-input" class="slider is-fullwidth is-info" step="1" min="0" max="100" value="10" type="range">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <div class="card">
+                <div class="card-content">
+                  <div class="output-canvas-container">
+                    <canvas id="output-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="footer has-text-centered">
+      <p><strong>knitter.js</strong> by <a href="https://christiansiegel.github.io/">Christian Siegel</a></p>
+      <p>Licensed <a href="https://opensource.org/licenses/mit-license.php">MIT</a></p>
+    </footer>
+    <script type="module" src="index.00e02433.js"></script><script src="index.a5c7e070.js" nomodule="" defer=""></script>
+    <script async="" defer="" data-href="https://github.com/christiansiegel/knitter.js" src="https://unpkg.com/github-corners/dist/embed.min.js"></script>
+  </body>
+</html>
