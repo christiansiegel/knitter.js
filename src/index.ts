@@ -18,7 +18,7 @@ const state = loadState({
     minimalDistance: 10,
 });
 const tokenFactory = new TokenFactory();
-const worker = new Worker(new URL('worker.ts', import.meta.url), {type: 'module'});
+const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' });
 const WorkerCore = wrap<typeof Core>(worker);
 
 document.addEventListener('DOMContentLoaded', async () => {
