@@ -44,8 +44,8 @@ parcelRequire.register("efNOl", function(module, exports) {
 
 $parcel$export(module.exports, "register", function () { return $02ad90f2d1c27ca1$export$357eb1b4f03c1402; }, function (v) { return $02ad90f2d1c27ca1$export$357eb1b4f03c1402 = v; });
 $parcel$export(module.exports, "resolve", function () { return $02ad90f2d1c27ca1$export$40339995e8a21591; }, function (v) { return $02ad90f2d1c27ca1$export$40339995e8a21591 = v; });
-var $02ad90f2d1c27ca1$export$40339995e8a21591;
 var $02ad90f2d1c27ca1$export$357eb1b4f03c1402;
+var $02ad90f2d1c27ca1$export$40339995e8a21591;
 "use strict";
 var $02ad90f2d1c27ca1$var$mapping = {
 };
@@ -64,7 +64,7 @@ $02ad90f2d1c27ca1$export$40339995e8a21591 = $02ad90f2d1c27ca1$var$resolve;
 });
 
 
-(parcelRequire("efNOl")).register(JSON.parse("{\"8JTzt\":\"index.00e02433.js\",\"eCoz2\":\"worker.90d90c81.js\"}"));
+(parcelRequire("efNOl")).register(JSON.parse("{\"8JTzt\":\"index.6354eb28.js\",\"eCoz2\":\"worker.8702600a.js\"}"));
 
 var $a9098c2136013134$var$niceErrors = {
     0: "Invalid value for configuration 'enforceActions', expected 'never', 'always' or 'observed'",
@@ -4919,9 +4919,9 @@ parcelRequire.register("9PEpu", function(module, exports) {
 
 $parcel$export(module.exports, "getBundleURL", function () { return $7288391bfc045be8$export$da289beea9c5b10d; }, function (v) { return $7288391bfc045be8$export$da289beea9c5b10d = v; });
 $parcel$export(module.exports, "getOrigin", function () { return $7288391bfc045be8$export$1b6c708f518305b4; }, function (v) { return $7288391bfc045be8$export$1b6c708f518305b4 = v; });
-var $7288391bfc045be8$export$da289beea9c5b10d;
 var $7288391bfc045be8$export$59e5c324fe003148;
 var $7288391bfc045be8$export$1b6c708f518305b4;
+var $7288391bfc045be8$export$da289beea9c5b10d;
 "use strict";
 var $7288391bfc045be8$var$bundleURL = {
 };

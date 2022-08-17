@@ -439,13 +439,13 @@ class $3f4e7a191dc42f41$export$4d3575e469168143 {
 });
 parcelRequire.register("b85RQ", function(module, exports) {
 
-$parcel$export(module.exports, "circularArrayIndexDistance", function () { return $ea4924849e4c37cf$export$8e6be8f6e51a727f; });
-$parcel$export(module.exports, "indexOfMax", function () { return $ea4924849e4c37cf$export$fc3d72b2d56ef84c; });
 $parcel$export(module.exports, "calcScore", function () { return $ea4924849e4c37cf$export$c91829f60946d404; });
-$parcel$export(module.exports, "lightenUp", function () { return $ea4924849e4c37cf$export$5eedaec0dbb10574; });
-$parcel$export(module.exports, "getLineIndices", function () { return $ea4924849e4c37cf$export$335d32fa77786d10; });
+$parcel$export(module.exports, "circularArrayIndexDistance", function () { return $ea4924849e4c37cf$export$8e6be8f6e51a727f; });
 $parcel$export(module.exports, "calcPins", function () { return $ea4924849e4c37cf$export$362ff7117861034a; });
+$parcel$export(module.exports, "indexOfMax", function () { return $ea4924849e4c37cf$export$fc3d72b2d56ef84c; });
+$parcel$export(module.exports, "lightenUp", function () { return $ea4924849e4c37cf$export$5eedaec0dbb10574; });
 $parcel$export(module.exports, "makePinPairId", function () { return $ea4924849e4c37cf$export$bf7f9056ac96cccd; });
+$parcel$export(module.exports, "getLineIndices", function () { return $ea4924849e4c37cf$export$335d32fa77786d10; });
 
 var $c3sYF = parcelRequire("c3sYF");
 function $ea4924849e4c37cf$export$fc3d72b2d56ef84c(arr) {

@@ -65,7 +65,7 @@ $2ebca382dbc18b85$export$40339995e8a21591 = $2ebca382dbc18b85$var$resolve;
 });
 
 
-(parcelRequire("40Mju")).register(JSON.parse("{\"7zONV\":\"index.a5c7e070.js\",\"eCoz2\":\"worker.90d90c81.js\"}"));
+(parcelRequire("40Mju")).register(JSON.parse("{\"7zONV\":\"index.a2bf5be4.js\",\"eCoz2\":\"worker.8702600a.js\"}"));
 
 var $6affecf2d197f5a4$var$niceErrors = {
     0: "Invalid value for configuration 'enforceActions', expected 'never', 'always' or 'observed'",
@@ -4920,9 +4920,9 @@ parcelRequire.register("lElyg", function(module, exports) {
 
 $parcel$export(module.exports, "getOrigin", function () { return $fc2e0d21e0609dd0$export$1b6c708f518305b4; }, function (v) { return $fc2e0d21e0609dd0$export$1b6c708f518305b4 = v; });
 $parcel$export(module.exports, "getBundleURL", function () { return $fc2e0d21e0609dd0$export$da289beea9c5b10d; }, function (v) { return $fc2e0d21e0609dd0$export$da289beea9c5b10d = v; });
-var $fc2e0d21e0609dd0$export$1b6c708f518305b4;
-var $fc2e0d21e0609dd0$export$da289beea9c5b10d;
 var $fc2e0d21e0609dd0$export$59e5c324fe003148;
+var $fc2e0d21e0609dd0$export$da289beea9c5b10d;
+var $fc2e0d21e0609dd0$export$1b6c708f518305b4;
 "use strict";
 var $fc2e0d21e0609dd0$var$bundleURL = {
 };
