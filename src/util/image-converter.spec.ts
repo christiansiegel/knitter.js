@@ -30,8 +30,8 @@ describe('convertImageDataUrlToGrayPixels()', () => {
         const dimensions = { width: 2, height: 3 };
         try {
             await convertImageDataUrlToGrayPixels(invalidDataUrl, dimensions);
-        } catch (e) {
-            expect(e.message).toBe('image load error');
+        } catch (e: unknown) {
+            expect((e as Error).message).toBe('image load error');
         }
         console.error = consoleError;
     });
